@@ -16,6 +16,7 @@ class DashboardMetricsService
         $graceCutoff = $now->copy()->subMinutes(15);
 
         $employees = Employee::query()
+            ->with('user:id,name')
             ->whereNotNull('duty_start_time')
             ->whereNotNull('duty_end_time')
             ->get();
@@ -36,7 +37,8 @@ class DashboardMetricsService
 
         $late = 0;
         $notUsing = 0;
-        $startedInactive = 0;
+        $startedInactive = [];
+
 
         foreach ($employees as $employee) {
             $start = Carbon::parse($now->toDateString().' '.$employee->duty_start_time);
@@ -61,7 +63,12 @@ class DashboardMetricsService
                     ->whereBetween('started_at', [$start->copy()->subMinutes(5), $start->copy()->addMinutes(30)])
                     ->exists();
                 if ($startedNearDuty) {
-                    $startedInactive++;
+                    $startedInactive[] = [
+                        'employee_id' => $employee->id,
+                        'name' => $employee->user?->name,
+                        'duty_start_time' => $employee->duty_start_time,
+                        'duty_end_time' => $employee->duty_end_time,
+                    ];
                 }
             }
         }
@@ -80,7 +87,8 @@ class DashboardMetricsService
             'active_users' => $activeUsers,
             'late_to_start' => $late,
             'not_using_tracker' => $notUsing,
-            'started_duty_inactive_now' => $startedInactive,
+            'started_duty_inactive_now' => count($startedInactive),
+            'started_duty_inactive_now_list' => $startedInactive,
         ];
     }
 }

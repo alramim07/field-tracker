@@ -13,6 +13,10 @@ export const adminUsersApi = {
   updatePermissions: (id, data) => client.put(`/admin/admin-users/${id}/permissions`, data),
 };
 
+export const dashboardApi = {
+  summary: () => client.get('/admin/dashboard/summary'),
+};
+
 export const PERMISSION_OPTIONS = [
   'dashboard.view','dashboard.create','dashboard.edit','dashboard.delete',
   'live_map.view','live_map.create','live_map.edit','live_map.delete',
