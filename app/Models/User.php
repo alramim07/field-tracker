@@ -60,6 +60,22 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
+    public function adminRoles(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(AdminRole::class, 'admin_role_user');
+    }
+
+    public function hasPermission(string $key): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->adminRoles()
+            ->whereHas('permissions', fn ($q) => $q->where('key', $key))
+            ->exists();
+    }
+
     public function isSuperAdmin(): bool
     {
         return $this->role === UserRole::SUPER_ADMIN;
