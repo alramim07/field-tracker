@@ -25,3 +25,6 @@ Thumbs.db
 
 # Local planning (do not commit)
 plan/
+
+/public/build-admin
+/resources/admin-ui/node_modules
