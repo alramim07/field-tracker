@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTrackerUserRequest;
 use App\Http\Requests\Admin\UpdateTrackerUserRequest;
@@ -13,13 +14,11 @@ use Illuminate\Http\Request;
 
 class TrackerUserController extends Controller
 {
-    public function __construct(private readonly TrackerUserService $service)
-    {
-    }
+    public function __construct(private readonly TrackerUserService $service) {}
 
     public function index(Request $request): JsonResponse
     {
-        $users = User::query()->where('role', \App\Enums\UserRole::EMPLOYEE)
+        $users = User::query()->where('role', UserRole::EMPLOYEE)
             ->with('employee')
             ->latest()
             ->paginate($request->integer('per_page', 15));

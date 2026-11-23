@@ -39,7 +39,6 @@ class DashboardMetricsService
         $notUsing = 0;
         $startedInactive = [];
 
-
         foreach ($employees as $employee) {
             $start = Carbon::parse($now->toDateString().' '.$employee->duty_start_time);
             $end = Carbon::parse($now->toDateString().' '.$employee->duty_end_time);

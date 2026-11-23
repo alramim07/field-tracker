@@ -17,8 +17,13 @@ class AdminController extends Controller
     public function employees(Request $request): JsonResponse
     {
         $query = Employee::query()->with(['user:id,name,email,role,status', 'region:id,name,code', 'area:id,name,code']);
-        if ($request->filled('region_id')) $query->where('region_id', $request->integer('region_id'));
-        if ($request->filled('area_id')) $query->where('area_id', $request->integer('area_id'));
+        if ($request->filled('region_id')) {
+            $query->where('region_id', $request->integer('region_id'));
+        }
+        if ($request->filled('area_id')) {
+            $query->where('area_id', $request->integer('area_id'));
+        }
+
         return response()->json($query->paginate(min((int) $request->integer('per_page', 20), 100)));
     }
 

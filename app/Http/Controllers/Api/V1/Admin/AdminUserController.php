@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreAdminUserRequest;
 use App\Http\Requests\Admin\UpdateAdminPermissionsRequest;
@@ -13,14 +14,12 @@ use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
 {
-    public function __construct(private readonly AdminUserService $service)
-    {
-    }
+    public function __construct(private readonly AdminUserService $service) {}
 
     public function index(Request $request): JsonResponse
     {
         $users = User::query()
-            ->whereIn('role', [\App\Enums\UserRole::ADMIN, \App\Enums\UserRole::SUPER_ADMIN])
+            ->whereIn('role', [UserRole::ADMIN, UserRole::SUPER_ADMIN])
             ->with('adminRoles.permissions')
             ->latest()
             ->paginate($request->integer('per_page', 15));

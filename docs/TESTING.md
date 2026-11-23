@@ -1,14 +1,16 @@
 # Testing
 
-## Latest automated run (Phase 2 completion, 2026-11-23)
+## Latest automated run (Phase 6, 2026-11-23)
 
-Command:
+Commands:
 ```powershell
 php artisan test
+npm --prefix resources/admin-ui run build
 ```
 
 Result: **PASS**
-- **29 passed, 97 assertions, ~2.11s**
+- Backend: **46 passed, 137 assertions**
+- Admin UI build: **PASS** (Vite production build)
 
 ## Suites covered
 - Unit example
@@ -20,6 +22,7 @@ Result: **PASS**
 - Location batch API: accept+latest update, duplicate event dedupe, expired session reject, older event does not overwrite latest, event dispatch, foreign session reject
 - Employee self API: own history/sessions/reports, cannot see other employee data
 - Admin API: admin access OK, employee forbidden
+- Phase 6 admin: duty/profile fields, RBAC schema/gates, SPA auth, tracker/admin management, dashboard metrics, broadcast channel auth, live locations endpoint/payload, admin shell route
 
 ## Manual smoke test checklist
 1. `php artisan serve`
@@ -34,6 +37,7 @@ Result: **PASS**
 
 ## Not yet tested
 - Real Android device/FGS behavior
-- Reverb/WebSocket live updates
+- End-to-end Reverb runtime with `laravel/reverb` package installed and running (channel auth/payload covered by tests; package install timed out in this environment)
+- Admin UI browser E2E against live backend/Reverb
 - Load test (400 devices / 80 events/sec)
 - Production MySQL/Redis deployment behavior

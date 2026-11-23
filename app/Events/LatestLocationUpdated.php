@@ -12,9 +12,7 @@ class LatestLocationUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(public readonly LatestLocation $latestLocation)
-    {
-    }
+    public function __construct(public readonly LatestLocation $latestLocation) {}
 
     public function broadcastOn(): array
     {

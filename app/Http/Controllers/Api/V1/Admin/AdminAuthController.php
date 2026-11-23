@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminLoginRequest;
 use App\Http\Resources\UserResource;
@@ -23,7 +24,7 @@ class AdminAuthController extends Controller
 
         /** @var User $user */
         $user = Auth::guard('web')->user();
-        if (! $user->isAdmin() || $user->status !== \App\Enums\UserStatus::ACTIVE) {
+        if (! $user->isAdmin() || $user->status !== UserStatus::ACTIVE) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

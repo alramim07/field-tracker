@@ -49,16 +49,34 @@ Enterprise Android live location tracking and management system (backend foundat
 ## Tests
 ```powershell
 php artisan test
+npm --prefix resources/admin-ui run build
 ```
-Latest verified result: **29 passed, 97 assertions**.
+Latest verified backend result: **46 passed, 137 assertions**. Admin UI build: **PASS**.
 
-## Manual API smoke test
+## Phase 6 Admin Dashboard
+- Backend: RBAC permissions (`section.action`), admin SPA auth (`/api/v1/admin/auth/*`), admin/tracker user management APIs, dashboard metrics, live location endpoint, and broadcasting channel auth for `admin.live-locations`.
+- Frontend: React + Tailwind SPA in `resources/admin-ui/`, served at `/admin`, with permission-guarded sidebar, dashboard metrics, tracker/admin management, settings placeholder, and live map.
+- Realtime: `LatestLocationUpdated` broadcasts on private `admin.live-locations`; frontend subscribes via Laravel Echo/Reverb when configured. Composer install of `laravel/reverb` may be required in environments where it is not yet present.
+
+### Admin UI setup
+```powershell
+npm --prefix resources/admin-ui install
+npm --prefix resources/admin-ui run build
+```
+For local dev:
+```powershell
+npm --prefix resources/admin-ui run dev
+php artisan serve
+```
+
+## Manual smoke test
 1. Login employee, get token.
 2. Register device: `POST /api/v1/device/register`
 3. Start tracking: `POST /api/v1/tracking/start` with `device_uuid`
 4. Send batch: `POST /api/v1/locations/batch`
 5. Check status/history: `GET /api/v1/tracking/status`, `GET /api/v1/me/location-history`
-6. Login admin and check `GET /api/v1/admin/live-locations`
+6. Login super admin to admin SPA: `POST /api/v1/admin/auth/login`, then open `/admin`.
+7. Verify Dashboard metrics, Tracker Users CRUD with duty time, Admins permission assignment (super admin only), and Live Map initial load.
 
 See `docs/API_DOCUMENTATION.md` for details.
 

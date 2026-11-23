@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class TrackerUserService
 {
-    public function __construct(private readonly AuditLogService $audit)
-    {
-    }
+    public function __construct(private readonly AuditLogService $audit) {}
 
     /** @param array<string, mixed> $data */
     public function create(array $data, User $actor): User
