@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a secure PRAN RFL-branded admin dashboard in Laravel + React/Tailwind with granular RBAC, tracker/admin management, duty-time-aware metrics, and real-time Google Maps live tracking via Reverb.
+**Goal:** Build a secure neutral-branded admin dashboard in Laravel + React/Tailwind with granular RBAC, tracker/admin management, duty-time-aware metrics, and live tracking that uses OpenStreetMap by default with Google Maps kept available for later Settings-driven configuration.
 
 **Architecture:** Keep Laravel 12 as the backend/API authority. Add additive admin SPA auth (Sanctum cookie/session) alongside existing mobile token auth. Implement RBAC as DB-backed permissions layered over existing `users.role`. Build a separate Vite React/Tailwind SPA under `resources/admin-ui/` served by Laravel, consuming `/api/v1/admin/*` APIs and private Reverb channels.
 
-**Tech Stack:** PHP 8.2, Laravel 12, Sanctum, MySQL/MariaDB, PHPUnit, Laravel Reverb/broadcasting, React, Vite, Tailwind CSS, Google Maps JS API, Axios.
+**Tech Stack:** PHP 8.2, Laravel 12, Sanctum, MySQL/MariaDB, PHPUnit, Laravel Reverb/broadcasting, React, Vite, Tailwind CSS, Leaflet/OpenStreetMap (default), Google Maps JS API (kept for Settings-driven activation), Axios.
 
 **Spec:** `docs/superpowers/specs/2026-11-23-phase-6-admin-dashboard-design.md`
 
@@ -19,7 +19,7 @@
 - Realtime: Laravel Reverb private channels; no Socket.io/Firebase. Smooth marker movement (Lerp/animation), no jumping.
 - Frontend: `resources/admin-ui/` separate Vite/React/Tailwind app inside this Laravel repo.
 - Settings and Notifications are UI placeholders only in Phase 6.
-- PRAN branding: restrained use of `#ED1D24`, white/neutral surfaces, sparse `#FED000`.
+- Neutral branding: restrained use of `#ED1D24`, white/neutral surfaces, sparse `#FED000`; company identity deferred to Settings.
 
 ## Review Focus
 
@@ -480,7 +480,7 @@ Run: `npm --prefix resources/admin-ui run build`.
 
 - [ ] **Step 2: Implement dashboard UI**
 
-Use neutral/minimal cards, PRAN red accent for key states, responsive layout. Handle loading/empty/error states.
+Use neutral/minimal cards, red accent for key states, responsive layout. Handle loading/empty/error states.
 
 - [ ] **Step 3: Run build**
 
@@ -581,11 +581,12 @@ git commit -m "feat(admin): add live location endpoint and broadcast event"
 **Files:**
 - Create: `resources/admin-ui/src/features/live-map/*`
 - Create: `resources/admin-ui/src/services/googleMaps.js`
+- Create: `resources/admin-ui/src/services/mapConfig.js`
 - Create: `resources/admin-ui/src/services/realtime.js`
 - Modify: `resources/admin-ui/src/api/*`
 
 **Interfaces:**
-- Produces: Live Map page with default Google Maps, avatar pins, accuracy radius, pulsing halo, Lerp-smoothed movement, reconnect handling.
+- Produces: Live Map page with default OpenStreetMap/Leaflet, avatar pins, accuracy radius, pulsing halo, Lerp-smoothed movement, reconnect handling. Google Maps implementation is retained behind the provider switch.
 
 - [ ] **Step 1: Build check / smoke setup**
 
@@ -642,7 +643,7 @@ Verify: super admin creates admin with limited permissions; admin sees only allo
 
 - [ ] **Step 4: Update docs**
 
-Document new endpoints, RBAC keys, Reverb/env vars (`BROADCAST_CONNECTION`, Reverb keys, `VITE_GOOGLE_MAPS_API_KEY`), admin UI build/dev commands, and manual test steps.
+Document new endpoints, RBAC keys, Reverb/env vars (`BROADCAST_CONNECTION`, Reverb keys), admin UI build/dev commands, OpenStreetMap default behavior, deferred Settings-driven Google key field, and manual test steps.
 
 - [ ] **Step 5: Commit**
 

@@ -9,7 +9,7 @@ npm --prefix resources/admin-ui run build
 ```
 
 Result: **PASS**
-- Backend: **46 passed, 137 assertions**
+- Backend: **47 passed, 139 assertions**
 - Admin UI build: **PASS** (Vite production build)
 
 ## Suites covered
@@ -34,6 +34,8 @@ Result: **PASS**
 7. Post to expired session -> rejected
 8. Check `/api/v1/me/location-history`, `/me/sessions`, `/me/reports`
 9. Login admin (`superadmin@fieldtracker.local` / `password`) -> `/api/v1/admin/live-locations` returns data
+10. Open `/admin/live-map` -> OpenStreetMap tiles load without any API key; marker/accuracy/halo render from latest locations
+11. Open `/admin` -> `Currently using app` is 0 for stale active sessions without a recent location ping
 
 ## Not yet tested
 - Real Android device/FGS behavior

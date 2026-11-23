@@ -51,11 +51,13 @@ Enterprise Android live location tracking and management system (backend foundat
 php artisan test
 npm --prefix resources/admin-ui run build
 ```
-Latest verified backend result: **46 passed, 137 assertions**. Admin UI build: **PASS**.
+Latest verified backend result: **47 passed, 139 assertions**. Admin UI build: **PASS**.
 
 ## Phase 6 Admin Dashboard
 - Backend: RBAC permissions (`section.action`), admin SPA auth (`/api/v1/admin/auth/*`), admin/tracker user management APIs, dashboard metrics, live location endpoint, and broadcasting channel auth for `admin.live-locations`.
 - Frontend: React + Tailwind SPA in `resources/admin-ui/`, served at `/admin`, with permission-guarded sidebar, dashboard metrics, tracker/admin management, settings placeholder, and live map.
+- Live Map: uses free OpenStreetMap tiles by default (no API key). The Google Maps implementation is retained and can be enabled later through a Settings-provided API key/provider switch.
+- Dashboard `Currently using app` counts employees with an active tracking session **and** a location ping within the last 5 minutes, so stale test sessions do not appear as active app usage.
 - Realtime: `LatestLocationUpdated` broadcasts on private `admin.live-locations`; frontend subscribes via Laravel Echo/Reverb when configured. Composer install of `laravel/reverb` may be required in environments where it is not yet present.
 
 ### Admin UI setup

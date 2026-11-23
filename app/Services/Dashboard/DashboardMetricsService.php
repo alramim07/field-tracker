@@ -13,7 +13,6 @@ class DashboardMetricsService
     {
         $now = $now ? $now->copy() : now();
         $staleCutoff = $now->copy()->subMinutes(5);
-        $graceCutoff = $now->copy()->subMinutes(15);
 
         $employees = Employee::query()
             ->with('user:id,name')
@@ -33,7 +32,8 @@ class DashboardMetricsService
             ->pluck('employee_id')
             ->unique();
 
-        $usingNow = $activeUserIds->merge($recentLocationEmployeeIds)->unique()->values();
+        // "Currently using app" means an active tracking session with a fresh location ping.
+        $usingNow = $activeUserIds->intersect($recentLocationEmployeeIds)->values();
 
         $late = 0;
         $notUsing = 0;
@@ -72,18 +72,8 @@ class DashboardMetricsService
             }
         }
 
-        $activeUsers = TrackingSession::query()
-            ->where('status', 'active')
-            ->where('expires_at', '>', $now)
-            ->where('started_at', '<=', $now)
-            ->distinct('employee_id')
-            ->count('employee_id');
-
-        // also count recent location users as active if you prefer; keep simple and test-aligned
-        $activeUsers = max($activeUsers, $usingNow->count());
-
         return [
-            'active_users' => $activeUsers,
+            'active_users' => $usingNow->count(),
             'late_to_start' => $late,
             'not_using_tracker' => $notUsing,
             'started_duty_inactive_now' => count($startedInactive),

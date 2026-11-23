@@ -2,19 +2,19 @@
 
 ## Context
 
-Field Tracker backend (Laravel 12, Sanctum, MariaDB, Phase 1-2 complete) already provides auth, device registration, tracking sessions, and location batch ingestion APIs. Phase 6 adds the administrative web product: a super-admin-managed RBAC system, an admin dashboard, tracker-user/admin management, and a real-time Google Maps live view. The mobile app is not built yet; backend API contracts must remain stable and mobile-compatible.
+Field Tracker backend (Laravel 12, Sanctum, MariaDB, Phase 1-2 complete) already provides auth, device registration, tracking sessions, and location batch ingestion APIs. Phase 6 adds the administrative web product: a super-admin-managed RBAC system, an admin dashboard, tracker-user/admin management, and a real-time live view using OpenStreetMap by default. The Google Maps implementation is retained for later Settings-driven activation. The mobile app is not built yet; backend API contracts must remain stable and mobile-compatible.
 
 ## Intent / Why
 
-PRAN RFL BD needs a professional operations dashboard where administrators can see who is tracking, who is late/missing, manage field users/admins, and monitor live locations in real time. The super admin must control who can access what, with granular action permissions and admin designations.
+Field Tracker needs a professional operations dashboard where administrators can see who is tracking, who is late/missing, manage field users/admins, and monitor live locations in real time. The super admin must control who can access what, with granular action permissions and admin designations.
 
 ## Goals
 
 - Super admin can create/manage admins, assign granular section-action permissions, and set admin role/designation labels.
 - Admins/super admins can create/manage tracker users, including duty time (`duty_start`, `duty_end`).
 - Dashboard shows operational metrics: currently using app, late to start tracker, not using tracker during duty window, started at duty time but inactive now.
-- Live Map shows all authorized users with avatar pin, accuracy radius, pulsing halo, default Google Maps style, updating in real time via Reverb.
-- Modern, minimalist, professional PRAN RFL branding with dark/light mode.
+- Live Map shows all authorized users with avatar pin, accuracy radius, pulsing halo, free OpenStreetMap tiles by default, updating in real time via Reverb. Google Maps style remains available for later activation.
+- Modern, minimalist, professional neutral branding with dark/light mode; company identity will be configurable later in Settings.
 - OOP-first Laravel structure: services, policies, form requests, API resources/DTOs, query/services, events, enums.
 
 ## Non-goals (Phase 6)
@@ -43,7 +43,7 @@ PRAN RFL BD needs a professional operations dashboard where administrators can s
 - **Duty time storage:** add `duty_start_time` and `duty_end_time` (time columns) to `employees` table; expose read-only in employee/mobile-facing APIs.
 - **Permission model (approved):** keep `users.role` enum (`super_admin/admin/employee`) as coarse identity for backward compatibility and mobile/API responses; layer granular DB permissions on top for admin dashboard access. Super admin bypasses granular checks. Existing admin middleware/policies will be adapted to honor both without breaking mobile token flows.
 - **Realtime:** Laravel Reverb private channels (Laravel-native WebSocket; preferred over adding Socket.io/Firebase for this stack) broadcasting latest-location DTO/resource only to authorized admins. *(Builder-check call: existing `/api/v1/admin/*` skeleton endpoints remain backward compatible/additive; Phase 6 may add new endpoints/resources for dashboard/live-map/admin management, but should not break existing response shapes without explicit versioning.)*
-- **Branding:** modern minimalist neutral UI; PRAN red `#ED1D24` primary accent, `#FED000` sparse highlight/warning accent, white/dark surfaces. No loud full-red UI.
+- **Branding:** modern minimalist neutral UI; red `#ED1D24` primary accent, `#FED000` sparse highlight/warning accent, white/dark surfaces. No loud full-red UI.
 
 ## Phase Breakdown
 
@@ -85,7 +85,7 @@ PRAN RFL BD needs a professional operations dashboard where administrators can s
 **UI shell details:**
 - Sidebar: Dashboard, Live Map, Tracker Users, Admins, Settings; bottom user avatar/name + logout.
 - Header: notification bell (placeholder dropdown/panel), date/time, dark/light mode.
-- Branding: PRAN RFL logo/text lockup area; neutral/minimal surfaces, red accent for active/primary actions.
+- Branding: neutral Field Tracker text lockup area; logo/company name will be configurable later in Settings; neutral/minimal surfaces, red accent for active/primary actions.
 
 **Acceptance:**
 - Admin can log in/out; unauthorized redirected.
@@ -119,7 +119,7 @@ PRAN RFL BD needs a professional operations dashboard where administrators can s
 
 **Work:**
 - `DashboardMetricsService`/query class computes:
-  - `active_users`: employees with active tracking session now (currently using app), regardless of duty window.
+  - `active_users`: employees with an active tracking session now and a location ping within the last 5 minutes (currently using app), regardless of duty window.
   - `late_to_start`: employee has duty window configured for today and no active session at/after duty start grace point; *(builder-check call: no grace period in v1, evaluated after `duty_start_time`; employees with no duty window excluded)*.
   - `not_using_tracker`: employee has configured duty window, is within duty window now, and has no active tracking session now.
   - `started_duty_inactive_now`: employee started a session during today’s duty window but currently has no active session; if they start again, removed from this list.
@@ -145,8 +145,8 @@ PRAN RFL BD needs a professional operations dashboard where administrators can s
 - Private channel: e.g. `private-admin.live-locations` authorized by `live_map.view`; future-proof for region scoping.
 - Endpoint: `GET /api/v1/admin/live-locations` for initial map load.
 - **Scope (approved):** show everyone with a `latest_locations` record on the Live Map; admins with `live_map.view` see all regions/areas in Phase 6 (region scoping deferred).
-- Frontend map: Google Maps JS loader/service abstraction, default map style, avatar marker, accuracy circle, pulsing halo, **smooth marker movement** on updates (linear interpolation/Lerp or equivalent animation between old/new lat-lng over a short duration; no jumping), reconnect handling.
-- Google Maps API key via env (`VITE_GOOGLE_MAPS_API_KEY` / backend-exposed config endpoint as appropriate).
+- Frontend map: provider abstraction with OpenStreetMap/Leaflet as the default (no key/billing), plus the existing Google Maps JS implementation kept intact; avatar marker, accuracy circle, pulsing halo, **smooth marker movement** on updates (linear interpolation/Lerp or equivalent animation between old/new lat-lng over a short duration; no jumping), reconnect handling.
+- Google Maps API key will be provided later from Settings by an admin; until then the map provider remains OpenStreetMap.
 
 **Security:**
 - Never broadcast sensitive fields unnecessarily.
@@ -207,11 +207,11 @@ resources/admin-ui/
 
 ## Branding / UI Direction
 
-- **Primary accent:** PRAN red `#ED1D24` (buttons/active states/small highlights only).
+- **Primary accent:** red `#ED1D24` (buttons/active states/small highlights only).
 - **Secondary accent:** `#FED000` very sparingly (warnings/highlights).
 - **Base:** white/light gray surfaces in light mode; deep neutral/slate surfaces in dark mode.
 - **Style:** modern, minimalist, professional, enterprise; clear spacing, readable typography, restrained shadows.
-- **Assets:** use PRAN RFL logo asset if provided later; placeholder text lockup initially.
+- **Assets:** no fixed company logo/name; placeholder neutral text lockup initially, configurable later in Settings.
 
 ## Testing Strategy
 
@@ -226,7 +226,7 @@ resources/admin-ui/
 - **Realtime infra:** Reverb requires worker/process config; provide fallback polling flag in UI/service layer if needed *(not default)*.
 - **Duty time/timezone ambiguity:** centralize in metrics service; document app timezone assumption.
 - **Separate frontend build:** integrate with Laravel scripts/CI; keep build output path deterministic.
-- **Google Maps key/security:** env-only key, HTTP referrer restrictions in deployment docs.
+- **Google Maps key/security:** when the Settings field is added, store the key server-side, expose only to authorized admin SPA clients, and apply HTTP referrer restrictions in deployment docs.
 
 ## Rollout / Migration Notes
 
