@@ -46,7 +46,7 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/devices', [AdminController::class, 'devices']);
             Route::get('/tracking-policies', [AdminController::class, 'trackingPolicies']);
             Route::get('/audit-logs', [AdminController::class, 'auditLogs']);
-            Route::get('/live-locations', [AdminController::class, 'liveLocations']);
+            Route::get('/live-locations', [AdminController::class, 'liveLocations'])->middleware('permission:live_map.view');
 
             Route::get('/tracker-users', [TrackerUserController::class, 'index'])->middleware('permission:tracker_users.view');
             Route::post('/tracker-users', [TrackerUserController::class, 'store'])->middleware('permission:tracker_users.create');

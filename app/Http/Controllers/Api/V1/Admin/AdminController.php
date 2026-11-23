@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Admin\LiveLocationResource;
 use App\Models\AuditLog;
 use App\Models\Device;
 use App\Models\Employee;
@@ -38,7 +39,9 @@ class AdminController extends Controller
 
     public function liveLocations(Request $request): JsonResponse
     {
-        $query = LatestLocation::query()->with(['employee.user:id,name,email', 'employee.region:id,name', 'employee.area:id,name']);
-        return response()->json($query->latest('recorded_at')->paginate(min((int) $request->integer('per_page', 50), 200)));
+        $query = LatestLocation::query()->with(['employee.user:id,name,avatar_path', 'employee:id,user_id,designation,employee_code']);
+        $locations = $query->latest('recorded_at')->paginate(min((int) $request->integer('per_page', 50), 200));
+
+        return LiveLocationResource::collection($locations)->response();
     }
 }
