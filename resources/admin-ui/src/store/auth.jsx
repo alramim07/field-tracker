@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   useEffect(() => { refresh(); }, []);
 
   const login = async (email, password) => {
+    await client.get('/sanctum/csrf-cookie', { baseURL: '/' });
     const { data } = await client.post('/admin/auth/login', { email, password });
     setUser(data.data.user);
     setPermissions(data.data.permissions || []);

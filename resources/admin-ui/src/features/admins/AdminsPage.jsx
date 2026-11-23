@@ -39,7 +39,7 @@ export default function AdminsPage() {
           <div className="grid md:grid-cols-4 gap-4">
             {['name','email','password','designation'].map(f => (
               <label key={f} className="text-sm block"><div className="mb-1 text-slate-600 dark:text-slate-300 capitalize">{f}</div>
-                <input type={f==='password'?'password':'text'} disabled={!!editingId && f!=='designation'} value={form[f]} onChange={e=>setForm({...form,[f]:e.target.value})} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent disabled:opacity-50" />
+                <input type={f==='password'?'password':'text'} disabled={!!editingId && f!=='designation'} value={form[f]} onChange={e=>setForm({...form,[f]:e.target.value})} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent text-slate-900 dark:text-slate-100 disabled:opacity-50" />
               </label>
             ))}
           </div>

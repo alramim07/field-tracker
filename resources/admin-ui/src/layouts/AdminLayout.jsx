@@ -23,8 +23,8 @@ export default function AdminLayout() {
       <div className="flex min-h-screen">
         <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
           <div className="px-5 py-5 border-b border-slate-200 dark:border-slate-800">
-            <div className="text-xs font-semibold tracking-wide text-red-600">PRAN RFL</div>
             <div className="text-lg font-semibold">Field Tracker</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Admin Dashboard</div>
           </div>
           <nav className="flex-1 p-3 space-y-1">
             {nav.map(item => (
