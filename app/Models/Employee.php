@@ -23,6 +23,8 @@ class Employee extends Model
         'area_id',
         'designation',
         'status',
+        'duty_start_time',
+        'duty_end_time',
     ];
 
     public function user(): BelongsTo

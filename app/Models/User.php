@@ -24,6 +24,8 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
+        'designation',
+        'avatar_path',
     ];
 
     /** @var list<string> */
