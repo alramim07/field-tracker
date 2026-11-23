@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\DashboardController;
 use App\Http\Controllers\Api\V1\Admin\TrackerUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
@@ -40,6 +41,7 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/me/reports', [EmployeeSelfController::class, 'reports']);
 
         Route::prefix('admin')->middleware('admin')->group(function (): void {
+            Route::get('/dashboard/summary', [DashboardController::class, 'summary'])->middleware('permission:dashboard.view');
             Route::get('/employees', [AdminController::class, 'employees']);
             Route::get('/devices', [AdminController::class, 'devices']);
             Route::get('/tracking-policies', [AdminController::class, 'trackingPolicies']);
