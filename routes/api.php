@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
+use App\Http\Controllers\Api\V1\Admin\TrackerUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EmployeeSelfController;
@@ -43,6 +44,12 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/tracking-policies', [AdminController::class, 'trackingPolicies']);
             Route::get('/audit-logs', [AdminController::class, 'auditLogs']);
             Route::get('/live-locations', [AdminController::class, 'liveLocations']);
+
+            Route::get('/tracker-users', [TrackerUserController::class, 'index'])->middleware('permission:tracker_users.view');
+            Route::post('/tracker-users', [TrackerUserController::class, 'store'])->middleware('permission:tracker_users.create');
+            Route::get('/tracker-users/{tracker_user}', [TrackerUserController::class, 'show'])->middleware('permission:tracker_users.view');
+            Route::put('/tracker-users/{tracker_user}', [TrackerUserController::class, 'update'])->middleware('permission:tracker_users.edit');
+            Route::delete('/tracker-users/{tracker_user}', [TrackerUserController::class, 'destroy'])->middleware('permission:tracker_users.delete');
         });
     });
 });
