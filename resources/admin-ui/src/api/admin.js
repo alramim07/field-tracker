@@ -17,6 +17,10 @@ export const dashboardApi = {
   summary: () => client.get('/admin/dashboard/summary'),
 };
 
+export const liveLocationsApi = {
+  list: () => client.get('/admin/live-locations', { params: { per_page: 200 } }),
+};
+
 export const PERMISSION_OPTIONS = [
   'dashboard.view','dashboard.create','dashboard.edit','dashboard.delete',
   'live_map.view','live_map.create','live_map.edit','live_map.delete',
