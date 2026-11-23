@@ -22,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Broadcast::routes();
+
         Gate::define('permission', function (User $user, ?string $key = null): bool {
             if (! $key) {
                 return false;
