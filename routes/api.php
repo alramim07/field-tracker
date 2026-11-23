@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
@@ -10,6 +11,14 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     Route::middleware('throttle:10,1')->post('/login', [AuthController::class, 'login']);
+
+    Route::prefix('admin/auth')->middleware('web')->group(function (): void {
+        Route::post('/login', [AdminAuthController::class, 'login']);
+        Route::middleware('auth:web')->group(function (): void {
+            Route::post('/logout', [AdminAuthController::class, 'logout']);
+            Route::get('/me', [AdminAuthController::class, 'me']);
+        });
+    });
 
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout']);
