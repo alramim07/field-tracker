@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\AdminAuthController;
 use App\Http\Controllers\Api\V1\Admin\AdminController;
+use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\TrackerUserController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
@@ -50,6 +51,11 @@ Route::prefix('v1')->group(function (): void {
             Route::get('/tracker-users/{tracker_user}', [TrackerUserController::class, 'show'])->middleware('permission:tracker_users.view');
             Route::put('/tracker-users/{tracker_user}', [TrackerUserController::class, 'update'])->middleware('permission:tracker_users.edit');
             Route::delete('/tracker-users/{tracker_user}', [TrackerUserController::class, 'destroy'])->middleware('permission:tracker_users.delete');
+
+            Route::get('/admin-users', [AdminUserController::class, 'index'])->middleware('permission:admins.view');
+            Route::post('/admin-users', [AdminUserController::class, 'store'])->middleware('super-admin');
+            Route::get('/admin-users/{admin_user}', [AdminUserController::class, 'show'])->middleware('permission:admins.view');
+            Route::put('/admin-users/{admin_user}/permissions', [AdminUserController::class, 'updatePermissions'])->middleware('super-admin');
         });
     });
 });
