@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\EmployeeSelfController;
 use App\Http\Controllers\Api\V1\LocationController;
+use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\TrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,9 @@ Route::prefix('v1')->group(function (): void {
     Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+        Route::patch('/me/profile', [ProfileController::class, 'update']);
+        Route::post('/me/photo', [ProfileController::class, 'uploadPhoto']);
+        Route::post('/me/password', [ProfileController::class, 'changePassword']);
 
         Route::post('/device/register', [DeviceController::class, 'register']);
         Route::post('/device/revoke', [DeviceController::class, 'revoke']);
