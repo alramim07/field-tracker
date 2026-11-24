@@ -2,6 +2,7 @@ import client from './client';
 
 export const trackerUsersApi = {
   list: (params) => client.get('/admin/tracker-users', { params }),
+  show: (id) => client.get(`/admin/tracker-users/${id}`),
   create: (data) => client.post('/admin/tracker-users', data),
   update: (id, data) => client.put(`/admin/tracker-users/${id}`, data),
   remove: (id) => client.delete(`/admin/tracker-users/${id}`),

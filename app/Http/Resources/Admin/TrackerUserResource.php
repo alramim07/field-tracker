@@ -13,7 +13,7 @@ class TrackerUserResource extends JsonResource
     {
         $employee = $this->employee;
 
-        return [
+        $data = [
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
@@ -32,5 +32,11 @@ class TrackerUserResource extends JsonResource
                 'duty_end_time' => $employee->duty_end_time,
             ] : null,
         ];
+
+        if (array_key_exists('extra_duty_audit', $this->resource->getAttributes())) {
+            $data['extra_duty_audit'] = $this->resource->getAttribute('extra_duty_audit');
+        }
+
+        return $data;
     }
 }

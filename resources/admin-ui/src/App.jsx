@@ -5,6 +5,7 @@ import AdminLayout from './layouts/AdminLayout';
 import DashboardPage from './features/dashboard/DashboardPage';
 import LiveMapPage from './features/live-map/LiveMapPage';
 import TrackerUsersPage from './features/tracker-users/TrackerUsersPage';
+import TrackerUserDetailsPage from './features/tracker-users/TrackerUserDetailsPage';
 import AdminsPage from './features/admins/AdminsPage';
 import SettingsPage from './features/settings/SettingsPage';
 import Can from './components/Can';
@@ -30,6 +31,7 @@ function RoutesApp() {
         <Route index element={<Guarded permission="dashboard.view"><DashboardPage /></Guarded>} />
         <Route path="live-map" element={<Guarded permission="live_map.view"><LiveMapPage /></Guarded>} />
         <Route path="tracker-users" element={<Guarded permission="tracker_users.view"><TrackerUsersPage /></Guarded>} />
+        <Route path="tracker-users/:id" element={<Guarded permission="tracker_users.view"><TrackerUserDetailsPage /></Guarded>} />
         <Route path="admins" element={<Guarded permission="admins.view"><AdminsPage /></Guarded>} />
         <Route path="settings" element={<Guarded permission="settings.view"><SettingsPage /></Guarded>} />
       </Route>

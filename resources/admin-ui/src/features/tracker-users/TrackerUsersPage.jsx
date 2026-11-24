@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { trackerUsersApi } from '../../api/admin';
 import Can from '../../components/Can';
 
@@ -69,7 +70,10 @@ export default function TrackerUsersPage() {
               <tr key={u.id} className="border-t border-slate-100 dark:border-slate-800">
                 <td className="p-3">{u.name}</td><td className="p-3">{u.email}</td><td className="p-3">{u.employee?.employee_code}</td>
                 <td className="p-3">{u.employee?.duty_start_time?.slice(0,5)} - {u.employee?.duty_end_time?.slice(0,5)}</td>
-                <td className="p-3 text-right"><Can permission="tracker_users.edit"><button onClick={()=>edit(u)} className="text-red-600">Edit</button></Can></td>
+                <td className="p-3 text-right space-x-3">
+                  <Link to={`/tracker-users/${u.id}`} className="text-slate-600 dark:text-slate-300 hover:underline">Details</Link>
+                  <Can permission="tracker_users.edit"><button onClick={()=>edit(u)} className="text-red-600">Edit</button></Can>
+                </td>
               </tr>
             ))}
           </tbody>
