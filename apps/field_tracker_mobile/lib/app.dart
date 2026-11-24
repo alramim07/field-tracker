@@ -8,6 +8,12 @@ import 'features/auth/auth_controller.dart';
 import 'features/auth/login_screen.dart';
 import 'features/device/api_device_registration_api.dart';
 import 'features/device/device_registration_service.dart';
+import 'features/history/api_location_history_repository.dart';
+import 'features/home/api_tracking_status_repository.dart';
+import 'features/home/day_state_store.dart';
+import 'features/home/geolocator_current_location_provider.dart';
+import 'features/home/home_screen.dart';
+import 'features/sync/app_sync_service.dart';
 
 class FieldTrackerApp extends StatefulWidget {
   const FieldTrackerApp({super.key});
@@ -22,6 +28,11 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
   late final ApiAuthRepository _authRepository;
   late final DeviceRegistrationService _deviceRegistrationService;
   late final AuthController _authController;
+  late final ApiTrackingStatusRepository _trackingStatusRepository;
+  late final ApiLocationHistoryRepository _locationHistoryRepository;
+  late final GeolocatorCurrentLocationProvider _locationProvider;
+  late final DayStateStore _dayStateStore;
+  late final AppSyncService _syncService;
   late final GoRouter _router;
 
   @override
@@ -37,6 +48,21 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
       storage: SecureDeviceIdentityStorage(),
       api: ApiDeviceRegistrationApi(apiClient: _apiClient),
     );
+    _trackingStatusRepository = ApiTrackingStatusRepository(apiClient: _apiClient);
+    _locationHistoryRepository = ApiLocationHistoryRepository(apiClient: _apiClient);
+    _locationProvider = GeolocatorCurrentLocationProvider();
+    _dayStateStore = MemoryDayStateStore();
+    _syncService = AppSyncService(tasks: [
+      () async {
+        await _apiClient.dio.get('/me');
+      },
+      () async {
+        await _trackingStatusRepository.fetchStatus();
+      },
+      () async {
+        await _locationHistoryRepository.fetchCurrentDay();
+      },
+    ]);
     _authController = AuthController(
       authRepository: _authRepository,
       deviceRegistrationService: _deviceRegistrationService,
@@ -62,9 +88,14 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
         ),
         GoRoute(
           path: '/',
-          builder: (context, state) => _HomePlaceholder(
-            onLogout: _authController.logout,
+          builder: (context, state) => HomeScreen(
+            trackingStatusRepository: _trackingStatusRepository,
+            syncService: _syncService,
+            dayStateStore: _dayStateStore,
+            locationHistoryRepository: _locationHistoryRepository,
+            currentLocationProvider: _locationProvider,
             userName: _authController.user?.name ?? 'Employee',
+            onLogout: _authController.logout,
           ),
         ),
       ],
@@ -94,32 +125,6 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
         ),
       ),
       routerConfig: _router,
-    );
-  }
-}
-
-class _HomePlaceholder extends StatelessWidget {
-  const _HomePlaceholder({required this.onLogout, required this.userName});
-
-  final Future<void> Function() onLogout;
-  final String userName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Field Tracker'),
-        actions: [
-          IconButton(
-            onPressed: onLogout,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      body: Center(
-        child: Text('Welcome, $userName'),
-      ),
     );
   }
 }
