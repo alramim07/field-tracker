@@ -32,8 +32,8 @@ class UpdateTrackerUserRequest extends FormRequest
             'area_id' => ['nullable', 'integer', 'exists:areas,id'],
             'designation' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'in:active,inactive'],
-            'duty_start_time' => ['nullable', 'date_format:H:i,H:i:s'],
-            'duty_end_time' => ['nullable', 'date_format:H:i,H:i:s', 'after:duty_start_time'],
+            'duty_start_time' => ['required', 'date_format:H:i,H:i:s'],
+            'duty_end_time' => ['required', 'date_format:H:i,H:i:s', 'after:duty_start_time'],
         ];
     }
 }

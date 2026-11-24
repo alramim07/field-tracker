@@ -44,4 +44,17 @@ class TrackerUserManagementTest extends TestCase
             'employee_code' => 'EMP-1002',
         ])->assertForbidden();
     }
+
+    public function test_tracker_user_create_requires_duty_times(): void
+    {
+        $admin = User::factory()->superAdmin()->create();
+        $token = $admin->createToken('test')->plainTextToken;
+
+        $this->withToken($token)->postJson('/api/v1/admin/tracker-users', [
+            'name' => 'Field User',
+            'email' => 'field@example.com',
+            'password' => 'password',
+            'employee_code' => 'EMP-1001',
+        ])->assertUnprocessable()->assertJsonValidationErrors(['duty_start_time', 'duty_end_time']);
+    }
 }
