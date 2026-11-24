@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreTrackerUserRequest;
 use App\Http\Requests\Admin\UpdateTrackerUserRequest;
 use App\Http\Resources\Admin\TrackerUserResource;
+use App\Models\LocationLog;
 use App\Models\TrackingSession;
 use App\Models\User;
 use App\Services\Admin\TrackerUserService;
@@ -84,6 +85,88 @@ class TrackerUserController extends Controller
         $user = $this->service->update($tracker_user, $request->validated(), $request->user());
 
         return (new TrackerUserResource($user))->response();
+    }
+
+    public function sessions(Request $request, User $tracker_user): JsonResponse
+    {
+        $employee = $tracker_user->employee;
+        if (! $employee) {
+            return response()->json(['message' => 'Employee profile not found.'], 404);
+        }
+
+        $query = TrackingSession::query()->where('employee_id', $employee->id);
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+        if ($request->filled('from')) {
+            $query->where('started_at', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $query->where('started_at', '<=', $request->date('to'));
+        }
+
+        $sessions = $query->latest('started_at')->paginate(min((int) $request->integer('per_page', 20), 100));
+
+        return response()->json($sessions);
+    }
+
+    public function locationHistory(Request $request, User $tracker_user): JsonResponse
+    {
+        $employee = $tracker_user->employee;
+        if (! $employee) {
+            return response()->json(['message' => 'Employee profile not found.'], 404);
+        }
+
+        $query = LocationLog::query()->where('employee_id', $employee->id);
+        if ($request->filled('session_uuid')) {
+            $query->whereHas('session', fn ($q) => $q->where('session_uuid', $request->string('session_uuid')));
+        }
+        if ($request->filled('from')) {
+            $query->where('recorded_at', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $query->where('recorded_at', '<=', $request->date('to'));
+        }
+
+        $logs = $query->latest('recorded_at')->paginate(min((int) $request->integer('per_page', 50), 200));
+
+        return response()->json($logs);
+    }
+
+    public function report(Request $request, User $tracker_user): JsonResponse
+    {
+        $employee = $tracker_user->employee;
+        if (! $employee) {
+            return response()->json(['message' => 'Employee profile not found.'], 404);
+        }
+
+        $sessionsQuery = TrackingSession::query()->where('employee_id', $employee->id);
+        $totalSessions = (clone $sessionsQuery)->count();
+        $activeSessions = (clone $sessionsQuery)->where('status', 'active')->count();
+        $countedSessions = (clone $sessionsQuery)->where('counted', true)->count();
+        $uncountedSessions = (clone $sessionsQuery)->where('counted', false)->count();
+        $totalLocations = LocationLog::query()->where('employee_id', $employee->id)->count();
+        $driver = $employee->getConnection()->getDriverName();
+        $durationExpression = match ($driver) {
+            'sqlite' => "COALESCE(SUM(CAST(ROUND((julianday(ended_at) - julianday(started_at)) * 86400) AS INTEGER)), 0)",
+            default => "COALESCE(SUM(TIMESTAMPDIFF(SECOND, started_at, ended_at)), 0)",
+        };
+        $totalTrackingSeconds = (int) ((clone $sessionsQuery)
+            ->where('counted', true)
+            ->whereNotNull('ended_at')
+            ->selectRaw("{$durationExpression} as total_seconds")
+            ->value('total_seconds') ?? 0);
+
+        return response()->json([
+            'data' => [
+                'total_sessions' => $totalSessions,
+                'active_sessions' => $activeSessions,
+                'counted_sessions' => $countedSessions,
+                'uncounted_sessions' => $uncountedSessions,
+                'total_locations' => $totalLocations,
+                'total_tracking_seconds' => $totalTrackingSeconds,
+            ],
+        ]);
     }
 
     public function destroy(Request $request, User $tracker_user): JsonResponse

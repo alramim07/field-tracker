@@ -46,15 +46,18 @@ Route::prefix('v1')->group(function (): void {
 
         Route::prefix('admin')->middleware('admin')->group(function (): void {
             Route::get('/dashboard/summary', [DashboardController::class, 'summary'])->middleware('permission:dashboard.view');
-            Route::get('/employees', [AdminController::class, 'employees']);
-            Route::get('/devices', [AdminController::class, 'devices']);
-            Route::get('/tracking-policies', [AdminController::class, 'trackingPolicies']);
-            Route::get('/audit-logs', [AdminController::class, 'auditLogs']);
+            Route::get('/employees', [AdminController::class, 'employees'])->middleware('permission:dashboard.view');
+            Route::get('/devices', [AdminController::class, 'devices'])->middleware('permission:dashboard.view');
+            Route::get('/tracking-policies', [AdminController::class, 'trackingPolicies'])->middleware('permission:dashboard.view');
+            Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->middleware('permission:dashboard.view');
             Route::get('/live-locations', [AdminController::class, 'liveLocations'])->middleware('permission:live_map.view');
 
             Route::get('/tracker-users', [TrackerUserController::class, 'index'])->middleware('permission:tracker_users.view');
             Route::post('/tracker-users', [TrackerUserController::class, 'store'])->middleware('permission:tracker_users.create');
             Route::get('/tracker-users/{tracker_user}', [TrackerUserController::class, 'show'])->middleware('permission:tracker_users.view');
+            Route::get('/tracker-users/{tracker_user}/sessions', [TrackerUserController::class, 'sessions'])->middleware('permission:tracker_users.view');
+            Route::get('/tracker-users/{tracker_user}/location-history', [TrackerUserController::class, 'locationHistory'])->middleware('permission:tracker_users.view');
+            Route::get('/tracker-users/{tracker_user}/report', [TrackerUserController::class, 'report'])->middleware('permission:tracker_users.view');
             Route::put('/tracker-users/{tracker_user}', [TrackerUserController::class, 'update'])->middleware('permission:tracker_users.edit');
             Route::delete('/tracker-users/{tracker_user}', [TrackerUserController::class, 'destroy'])->middleware('permission:tracker_users.delete');
 

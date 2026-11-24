@@ -1,24 +1,16 @@
 # Testing
 
-## Latest automated run (Phase 3 docs/verification pass, 2026-11-24)
+## Latest automated run (Backend completion pass, 2026-11-24)
 
-Commands run:
+Command run (real project: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker`):
 ```powershell
 php artisan test
-npm --prefix resources/admin-ui run build
-cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile"
-C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze
-C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test
-C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug
 ```
 
-Results: **PASS (backend/admin/flutter analyze/flutter test), BLOCKED (Android debug build)**
-- Backend: **68 passed, 329 assertions** (`php artisan test`)
-- Admin UI build: **PASS** (`npm --prefix resources/admin-ui run build`, Vite production build)
-- Flutter analyze: **PASS** (`No issues found!`)
-- Flutter test: **PASS** (`22 passed`)
-- Android debug APK build: **BLOCKED** — missing Android NDK `28.2.13676358` at `C:\Android\Sdk` (`flutter build apk --debug` failed during Gradle configure)
-- Real Android device/emulator foreground-service smoke: **NOT RUN** — no connected Android device/emulator in this environment
+Result: **PASS**
+- Backend: **70 passed, 339 assertions**
+
+Previous Phase 3 verification (2026-11-24, worktree) also recorded: admin UI build PASS, Flutter analyze PASS, Flutter test 22 passed, Android debug APK build BLOCKED (missing NDK `28.2.13676358`), real Android FGS smoke NOT RUN.
 
 ## Suites covered
 
@@ -37,6 +29,7 @@ Results: **PASS (backend/admin/flutter analyze/flutter test), BLOCKED (Android d
 - Admin API: admin access OK, employee forbidden
 - Phase 6 admin: duty/profile fields, RBAC schema/gates, SPA auth, tracker/admin management, dashboard metrics, broadcast channel auth, live locations endpoint/payload, admin shell route
 - Admin tracker audit: tracker user details include forgotten extra-duty audit
+- Admin tracker history/report: admin can view tracker-user sessions, location history, and report summary; non-admin forbidden
 - Live Map data: Bangladesh factory coordinates, dynamic place-name resolution, previous-ping place name, tracker/offline durations, active-tracking flag, broadcast payload parity
 
 ### Mobile (Flutter)

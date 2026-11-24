@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added - 2026-11-24 (Backend completion pass)
+- Added permission guards (`dashboard.view`) to admin skeleton endpoints: `/admin/employees`, `/admin/devices`, `/admin/tracking-policies`, `/admin/audit-logs`.
+- Added admin tracker-user endpoints: `GET /admin/tracker-users/{id}/sessions`, `GET /admin/tracker-users/{id}/location-history`, `GET /admin/tracker-users/{id}/report` (permission `tracker_users.view`).
+- Enriched `/api/v1/me/reports` with `counted_sessions`, `uncounted_sessions`, `total_tracking_seconds`.
+- Added feature tests for admin tracker-user history/report endpoints.
+
+### Verification - 2026-11-24 (Backend completion pass)
+- `php artisan test` (real project): **PASS** (70 passed, 339 assertions)
+
 ### Added - 2026-11-24 (Phase 3 employee mobile tracker)
 - Flutter employee app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` with auth, device registration, OSM map, travel history movement/stops, notifications, and drawer/profile/photo/password/logout flows.
 - Native Kotlin Android foreground tracking service and Flutter bridge for tracking runtime/state/sync.

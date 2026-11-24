@@ -189,17 +189,20 @@ Query: `session_uuid`, `from`, `to`, `per_page`. Returns paginated own `location
 Paginated own tracking sessions.
 
 ### GET `/me/reports` (auth)
-Returns summary counts: `total_sessions`, `active_sessions`, `total_locations`.
+Returns summary counts: `total_sessions`, `active_sessions`, `counted_sessions`, `uncounted_sessions`, `total_locations`, `total_tracking_seconds` (counted completed sessions only).
 
 ## Admin (auth + admin/super_admin)
 
-- `GET /admin/employees` (filters: `region_id`, `area_id`, pagination)
-- `GET /admin/devices`
-- `GET /admin/tracking-policies`
-- `GET /admin/audit-logs`
-- `GET /admin/live-locations`
+- `GET /admin/employees` (filters: `region_id`, `area_id`, pagination; permission `dashboard.view`)
+- `GET /admin/devices` (permission `dashboard.view`)
+- `GET /admin/tracking-policies` (permission `dashboard.view`)
+- `GET /admin/audit-logs` (permission `dashboard.view`)
+- `GET /admin/live-locations` (permission `live_map.view`)
 - `GET /admin/dashboard/summary` (permission `dashboard.view`)
 - `GET/POST /admin/tracker-users`, `GET/PUT/DELETE /admin/tracker-users/{tracker_user}` (permission-gated; create/edit/delete per tracker_users permissions)
+- `GET /admin/tracker-users/{tracker_user}/sessions` (permission `tracker_users.view`; filters: `status`, `from`, `to`, `per_page`)
+- `GET /admin/tracker-users/{tracker_user}/location-history` (permission `tracker_users.view`; filters: `session_uuid`, `from`, `to`, `per_page`)
+- `GET /admin/tracker-users/{tracker_user}/report` (permission `tracker_users.view`; returns `total_sessions`, `active_sessions`, `counted_sessions`, `uncounted_sessions`, `total_locations`, `total_tracking_seconds`)
 - `GET/POST /admin/admin-users`, `GET /admin/admin-users/{admin_user}`, `PUT /admin/admin-users/{admin_user}/permissions` (super-admin guarded where applicable)
 
 ### Tracker user detail additive field: `extra_duty_audit`
