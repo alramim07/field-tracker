@@ -446,11 +446,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildActionButton(BuildContext context, _HomeViewState state) {
+    final canAct = widget.trackingBridge != null;
     switch (state) {
       case _HomeViewState.beforeStart:
         return FilledButton(
           key: const Key('start_duty_tracking'),
-          onPressed: () => _runBridgeAction((b) => b.startNormalDuty()),
+          onPressed: canAct ? () => _runBridgeAction((b) => b.startNormalDuty()) : null,
           child: const Text('Start duty tracking'),
         );
       case _HomeViewState.normalTracking:
@@ -465,13 +466,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case _HomeViewState.dutyEnded:
         return FilledButton(
           key: const Key('extend_duty_tracking'),
-          onPressed: () => _runBridgeAction((b) => b.startExtraDuty()),
+          onPressed: canAct ? () => _runBridgeAction((b) => b.startExtraDuty()) : null,
           child: const Text('Extend duty tracking time'),
         );
       case _HomeViewState.extraTracking:
         return FilledButton(
           key: const Key('end_extra_duty'),
-          onPressed: () => _runBridgeAction((b) => b.stopExtraDuty()),
+          onPressed: canAct ? () => _runBridgeAction((b) => b.stopExtraDuty()) : null,
           child: const Text('End extra duty'),
         );
       case _HomeViewState.extraEnded:
