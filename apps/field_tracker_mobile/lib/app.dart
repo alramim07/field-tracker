@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
@@ -14,6 +15,8 @@ import 'features/home/api_tracking_status_repository.dart';
 import 'features/home/day_state_store.dart';
 import 'features/home/geolocator_current_location_provider.dart';
 import 'features/home/home_screen.dart';
+import 'features/notifications/notification_store.dart';
+import 'features/profile/api_profile_repository.dart';
 import 'features/sync/app_sync_service.dart';
 import 'features/tracking/api_tracking_session_api.dart';
 import 'features/tracking/tracker_bridge.dart';
@@ -39,6 +42,8 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
   late final DayStateStore _dayStateStore;
   late final AppSyncService _syncService;
   late final TrackingBridge _trackingBridge;
+  late final ApiProfileRepository _profileRepository;
+  NotificationStore? _notificationStore;
   late final GoRouter _router;
 
   @override
@@ -70,6 +75,8 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
         await _locationHistoryRepository.fetchCurrentDay();
       },
     ]);
+    _profileRepository = ApiProfileRepository(apiClient: _apiClient);
+    _initNotificationStore();
     const permissionFlow = TrackingPermissionFlow();
     _trackingBridge = MethodChannelTrackingBridge(
       sessionApi: ApiTrackingSessionApi(
@@ -116,6 +123,8 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
             dayStateStore: _dayStateStore,
             locationHistoryRepository: _locationHistoryRepository,
             currentLocationProvider: _locationProvider,
+            notificationStore: _notificationStore,
+            profileRepository: _profileRepository,
             userName: _authController.user?.name ?? 'Employee',
             onLogout: _authController.logout,
           ),
@@ -123,6 +132,14 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
       ],
     );
     _authController.restoreSession();
+  }
+
+  Future<void> _initNotificationStore() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _notificationStore = NotificationStore(prefs: prefs);
+    });
   }
 
   @override

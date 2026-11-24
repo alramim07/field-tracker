@@ -1,11 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter_map/flutter_map.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../drawer/app_drawer.dart';
 import '../history/history_grouping_service.dart';
 import '../history/location_history_repository.dart';
+import '../notifications/notification_store.dart';
+import '../notifications/notifications_screen.dart';
+import '../profile/change_password_screen.dart';
+import '../profile/profile_repository.dart';
+import '../profile/profile_screen.dart';
+import '../profile/user_profile.dart';
 import '../sync/sync_service.dart';
 import 'current_location_provider.dart';
 import 'day_state_store.dart';
@@ -22,6 +30,8 @@ class HomeScreen extends StatefulWidget {
     this.dayStateStore,
     this.locationHistoryRepository,
     this.currentLocationProvider,
+    this.notificationStore,
+    this.profileRepository,
     this.now,
     this.userName = 'Employee',
     this.onLogout,
@@ -34,6 +44,8 @@ class HomeScreen extends StatefulWidget {
   final DayStateStore? dayStateStore;
   final LocationHistoryRepository? locationHistoryRepository;
   final CurrentLocationProvider? currentLocationProvider;
+  final NotificationStore? notificationStore;
+  final ProfileRepository? profileRepository;
   final DateTime Function()? now;
   final String userName;
   final Future<void> Function()? onLogout;
@@ -51,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<HistorySegment> _segments = const [];
   CurrentLocationFix? _currentFix;
   Timer? _ticker;
+  UserProfile? _profile;
+  int _unreadCount = 0;
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
@@ -80,7 +94,59 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     await _checkDayChangeAndMaybeSync(initialLoad: true);
     await _refreshStatus();
     await _refreshLocationAndHistory();
+    await _loadProfile();
+    await _refreshUnreadCount();
     if (mounted) setState(() => _loading = false);
+  }
+
+  Future<void> _loadProfile() async {
+    final repo = widget.profileRepository;
+    if (repo == null) return;
+    try {
+      final profile = await repo.fetchProfile();
+      if (mounted) setState(() => _profile = profile);
+    } catch (_) {}
+  }
+
+  Future<void> _refreshUnreadCount() async {
+    final store = widget.notificationStore;
+    if (store == null) return;
+    try {
+      final count = await store.unreadCount();
+      if (mounted) setState(() => _unreadCount = count);
+    } catch (_) {}
+  }
+
+  Future<void> _maybeRecordUnexpectedStop(TrackingStatus status) async {
+    final store = widget.notificationStore;
+    if (store == null) return;
+    final session = status.activeSession;
+    if (session == null) return;
+    if (session.isActive) return;
+    if (!session.isNormalDuty) return;
+    final stopReason = session.stopReason ?? '';
+    const scheduled = {
+      'expired',
+      'duty_end_expired',
+      'logout',
+      'midnight_auto_stopped',
+      'manual_extra_stop',
+    };
+    if (scheduled.contains(stopReason)) return;
+    final endedAt = session.endedAt;
+    final expiresAt = session.expiresAt;
+    if (endedAt != null && expiresAt != null && !endedAt.isBefore(expiresAt)) {
+      return;
+    }
+    try {
+      await store.addUnexpectedEarlyStop(
+        sessionId: session.sessionUuid,
+        stoppedAt: endedAt ?? _now().toUtc(),
+        dutyEndTime: _profile?.dutyEndTime ?? session.expiresAt?.toLocal().toIso8601String().substring(11, 19),
+        stopReason: stopReason.isEmpty ? 'unexpected_stop' : stopReason,
+      );
+      await _refreshUnreadCount();
+    } catch (_) {}
   }
 
   Future<void> _checkDayChangeAndMaybeSync({bool initialLoad = false}) async {
@@ -119,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _status = status;
         _configureTicker(status);
       });
+      await _maybeRecordUnexpectedStop(status);
     } catch (_) {
       if (!mounted) return;
       setState(() {});
@@ -201,6 +268,80 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openNotifications() async {
+    final store = widget.notificationStore;
+    if (store == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => NotificationsScreen(store: store),
+      ),
+    );
+    await _refreshUnreadCount();
+  }
+
+  Future<void> _openUpdateProfile() async {
+    final repo = widget.profileRepository;
+    final profile = _profile;
+    if (repo == null || profile == null) {
+      await _loadProfile();
+    }
+    final current = _profile;
+    final profileRepo = widget.profileRepository;
+    if (current == null || profileRepo == null || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ProfileScreen(
+          profile: current,
+          onSaveProfile: ({required String email, required String? phone}) async {
+            final updated = await profileRepo.updateProfile(phone: phone, email: email);
+            if (mounted) setState(() => _profile = updated);
+            return updated;
+          },
+          onUploadPhoto: () async {
+            final picker = ImagePicker();
+            final picked = await picker.pickImage(
+              source: ImageSource.gallery,
+              imageQuality: 85,
+              maxWidth: 1024,
+            );
+            if (picked == null) return null;
+            final url = await profileRepo.uploadPhoto(
+              filePath: picked.path,
+              filename: picked.name,
+            );
+            if (mounted) {
+              setState(() => _profile = _profile?.copyWith(photoUrl: url));
+            }
+            return url;
+          },
+        ),
+      ),
+    );
+    await _loadProfile();
+  }
+
+  Future<void> _openChangePassword() async {
+    final repo = widget.profileRepository;
+    if (repo == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChangePasswordScreen(
+          onChangePassword: ({
+            required String currentPassword,
+            required String password,
+            required String passwordConfirmation,
+          }) {
+            return repo.changePassword(
+              currentPassword: currentPassword,
+              password: password,
+              passwordConfirmation: passwordConfirmation,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   bool get _isFreshDayReset {
     final status = _status;
     if (status == null) return false;
@@ -281,8 +422,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         title: const Text('Field Tracker'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            key: const Key('notifications_button'),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.notifications_none),
+                if (_unreadCount > 0)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.error,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: _openNotifications,
             tooltip: 'Notifications',
           ),
           IconButton(
@@ -298,24 +458,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: SafeArea(
-          child: ListView(
-            children: [
-              ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(widget.userName),
-                subtitle: const Text('Employee'),
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Home'),
-                onTap: () => Navigator.of(context).maybePop(),
-              ),
-            ],
-          ),
-        ),
+      drawer: AppDrawer(
+        profile: _profile ??
+            UserProfile(
+              id: 0,
+              name: widget.userName,
+              email: '',
+              phone: null,
+              staffId: null,
+              designation: null,
+              photoUrl: null,
+              dutyStartTime: null,
+              dutyEndTime: null,
+              totalTrackingSeconds: 0,
+            ),
+        onHome: () => Navigator.of(context).maybePop(),
+        onNotifications: () {
+          Navigator.of(context).maybePop();
+          _openNotifications();
+        },
+        onUpdateProfile: () {
+          Navigator.of(context).maybePop();
+          _openUpdateProfile();
+        },
+        onChangePassword: () {
+          Navigator.of(context).maybePop();
+          _openChangePassword();
+        },
+        onLogout: () async {
+          if (widget.onLogout != null) {
+            await widget.onLogout!();
+          }
+        },
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
