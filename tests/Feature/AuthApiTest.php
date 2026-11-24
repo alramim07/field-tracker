@@ -113,4 +113,32 @@ class AuthApiTest extends TestCase
         ]);
         Carbon::setTestNow();
     }
+
+    public function test_logout_preserves_expiry_semantics_for_already_expired_active_session(): void
+    {
+        Carbon::setTestNow('2026-11-24 09:00:00');
+        $employee = Employee::factory()->create([
+            'duty_start_time' => '09:00:00',
+            'duty_end_time' => '21:00:00',
+        ]);
+        $device = Device::factory()->create(['employee_id' => $employee->id]);
+        $token = $employee->user->createToken('test')->plainTextToken;
+        TrackingPolicy::factory()->create(['duration_minutes' => 540]);
+
+        $this->withToken($token)->postJson('/api/v1/tracking/start', [
+            'device_uuid' => $device->device_uuid,
+        ])->assertCreated();
+
+        $session = TrackingSession::query()->where('employee_id', $employee->id)->firstOrFail();
+
+        Carbon::setTestNow('2026-11-24 21:30:00');
+        $this->withToken($token)->postJson('/api/v1/logout')->assertOk();
+
+        $session->refresh();
+        $this->assertSame(TrackingSessionStatus::EXPIRED, $session->status);
+        $this->assertSame(StopReason::EXPIRED, $session->stop_reason);
+        $this->assertTrue($session->counted);
+        $this->assertEquals(Carbon::parse('2026-11-24 21:00:00', 'Asia/Dhaka'), $session->ended_at);
+        Carbon::setTestNow();
+    }
 }

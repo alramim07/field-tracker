@@ -55,8 +55,11 @@ class TrackingController extends Controller
             return response()->json(['message' => 'Employee profile not found.'], 403);
         }
 
+        $clientMidnightAt = $request->query('client_midnight_at');
+        $clientMidnightAt = is_string($clientMidnightAt) && $clientMidnightAt !== '' ? $clientMidnightAt : null;
+
         $session = $this->trackingSessionService->status($employee);
-        $statusMeta = $this->trackingSessionService->statusMeta($employee, $session);
+        $statusMeta = $this->trackingSessionService->statusMeta($employee, $session, $clientMidnightAt);
 
         return response()->json([
             'data' => [

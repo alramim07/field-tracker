@@ -234,11 +234,22 @@ class TrackingSessionService
         return $session;
     }
 
-    public function statusMeta(Employee $employee, ?TrackingSession $session = null): array
+    public function statusMeta(Employee $employee, ?TrackingSession $session = null, ?string $clientMidnightAt = null): array
     {
         $nowLocal = now()->setTimezone('Asia/Dhaka');
-        $dayStart = $nowLocal->copy()->startOfDay();
-        $dayEnd = $dayStart->copy()->addDay();
+
+        if ($clientMidnightAt) {
+            try {
+                $dayEnd = Carbon::parse($clientMidnightAt)->setTimezone(config('app.timezone'));
+                $dayStart = $dayEnd->copy()->subDay();
+            } catch (\Throwable) {
+                $dayStart = $nowLocal->copy()->startOfDay();
+                $dayEnd = $dayStart->copy()->addDay();
+            }
+        } else {
+            $dayStart = $nowLocal->copy()->startOfDay();
+            $dayEnd = $dayStart->copy()->addDay();
+        }
 
         $hasUsedExtraToday = TrackingSession::query()
             ->where('employee_id', $employee->id)
