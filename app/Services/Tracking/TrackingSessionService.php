@@ -62,7 +62,7 @@ class TrackingSessionService
 
             if ($active) {
                 if ($active->expires_at->isPast()) {
-                    $this->expireSession($active);
+                    $active->markAsExpired();
                 } else {
                     throw ValidationException::withMessages(['session' => ['An active tracking session already exists.']]);
                 }
@@ -198,7 +198,7 @@ class TrackingSessionService
         }
 
         if ($session->expires_at->isPast()) {
-            $this->expireSession($session);
+            $session->markAsExpired();
             throw ValidationException::withMessages(['session' => ['Tracking session has already expired.']]);
         }
 
@@ -227,7 +227,7 @@ class TrackingSessionService
             ->first();
 
         if ($session && $session->status === TrackingSessionStatus::ACTIVE && $session->expires_at->isPast()) {
-            $this->expireSession($session);
+            $session->markAsExpired();
             $session = $session->fresh();
         }
 
@@ -294,7 +294,7 @@ class TrackingSessionService
         }
 
         if ($session->expires_at->isPast()) {
-            $this->expireSession($session);
+            $session->markAsExpired();
             return;
         }
 
@@ -307,20 +307,5 @@ class TrackingSessionService
         $this->auditLogService->log('tracking.session_stopped', $employee->user, $session, [
             'stop_reason' => StopReason::LOGOUT->value,
         ], $ipAddress);
-    }
-
-    private function expireSession(TrackingSession $session): void
-    {
-        $reason = $session->session_type === TrackingSessionType::EXTRA_DUTY
-            ? StopReason::MIDNIGHT_AUTO
-            : StopReason::EXPIRED;
-        $counted = $session->session_type === TrackingSessionType::EXTRA_DUTY ? false : $session->counted;
-
-        $session->update([
-            'status' => TrackingSessionStatus::EXPIRED,
-            'ended_at' => $session->expires_at,
-            'stop_reason' => $reason,
-            'counted' => $counted,
-        ]);
     }
 }

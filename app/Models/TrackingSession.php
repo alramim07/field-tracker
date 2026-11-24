@@ -77,4 +77,19 @@ class TrackingSession extends Model
     {
         return $this->expires_at !== null && $this->expires_at->isPast();
     }
+
+    public function markAsExpired(): void
+    {
+        $reason = $this->session_type === TrackingSessionType::EXTRA_DUTY
+            ? StopReason::MIDNIGHT_AUTO
+            : StopReason::EXPIRED;
+        $counted = $this->session_type === TrackingSessionType::EXTRA_DUTY ? false : $this->counted;
+
+        $this->update([
+            'status' => TrackingSessionStatus::EXPIRED,
+            'ended_at' => $this->expires_at,
+            'stop_reason' => $reason,
+            'counted' => $counted,
+        ]);
+    }
 }
