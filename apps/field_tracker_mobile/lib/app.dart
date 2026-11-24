@@ -17,6 +17,7 @@ import 'features/home/home_screen.dart';
 import 'features/sync/app_sync_service.dart';
 import 'features/tracking/api_tracking_session_api.dart';
 import 'features/tracking/tracker_bridge.dart';
+import 'features/tracking/tracking_permission_flow.dart';
 
 class FieldTrackerApp extends StatefulWidget {
   const FieldTrackerApp({super.key});
@@ -69,6 +70,7 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
         await _locationHistoryRepository.fetchCurrentDay();
       },
     ]);
+    const permissionFlow = TrackingPermissionFlow();
     _trackingBridge = MethodChannelTrackingBridge(
       sessionApi: ApiTrackingSessionApi(
         apiClient: _apiClient,
@@ -79,6 +81,7 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
       tokenProvider: _tokenStorage.readToken,
       deviceUuidProvider: _deviceIdentityStorage.readDeviceUuid,
       baseUrl: AppConfig.apiBaseUrl,
+      ensurePermissions: permissionFlow.ensureGranted,
     );
     _authController = AuthController(
       authRepository: _authRepository,

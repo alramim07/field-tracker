@@ -115,7 +115,8 @@ class TrackingForegroundService : Service(), LocationListener {
 
     private fun startLocationUpdates() {
         if (!hasLocationPermission()) {
-            TrackingRuntime.setRunning(isRunning = false, stopReason = "missing_location_permission")
+            TrackingRuntime.clear("missing_location_permission")
+            clearPersistedState()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
             return

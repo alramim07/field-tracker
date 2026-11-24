@@ -91,12 +91,14 @@ class MethodChannelTrackingBridge implements TrackingBridge {
     Future<String?> Function()? tokenProvider,
     Future<String?> Function()? deviceUuidProvider,
     String? baseUrl,
+    Future<void> Function()? ensurePermissions,
   })  : _channel = channel,
         _eventChannel = eventChannel,
         _sessionApi = sessionApi,
         _tokenProvider = tokenProvider,
         _deviceUuidProvider = deviceUuidProvider,
-        _baseUrl = baseUrl;
+        _baseUrl = baseUrl,
+        _ensurePermissions = ensurePermissions;
 
   final MethodChannel _channel;
   final EventChannel _eventChannel;
@@ -104,6 +106,7 @@ class MethodChannelTrackingBridge implements TrackingBridge {
   final Future<String?> Function()? _tokenProvider;
   final Future<String?> Function()? _deviceUuidProvider;
   final String? _baseUrl;
+  final Future<void> Function()? _ensurePermissions;
 
   Stream<Map<String, dynamic>>? _events;
 
@@ -120,6 +123,9 @@ class MethodChannelTrackingBridge implements TrackingBridge {
 
   @override
   Future<void> startTracking(Map<String, dynamic> payload) async {
+    if (_ensurePermissions != null) {
+      await _ensurePermissions();
+    }
     final enriched = Map<String, dynamic>.from(payload);
     enriched['base_url'] ??= _baseUrl;
     if (enriched['token'] == null && _tokenProvider != null) {
@@ -180,10 +186,24 @@ class MethodChannelTrackingBridge implements TrackingBridge {
 
   @override
   Future<void> stopExtraDuty() async {
+    Object? backendError;
+    StackTrace? backendStack;
     final api = _sessionApi;
     if (api != null) {
-      await api.stopExtraDuty();
+      try {
+        await api.stopExtraDuty();
+      } catch (e, st) {
+        backendError = e;
+        backendStack = st;
+      }
     }
-    await _channel.invokeMethod<void>('stopExtraDuty');
+    try {
+      await _channel.invokeMethod<void>('stopExtraDuty');
+    } catch (_) {
+      // Best-effort native stop; backend error (if any) is surfaced below.
+    }
+    if (backendError != null) {
+      Error.throwWithStackTrace(backendError, backendStack!);
+    }
   }
 }

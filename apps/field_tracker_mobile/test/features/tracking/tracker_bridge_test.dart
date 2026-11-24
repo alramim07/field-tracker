@@ -85,4 +85,45 @@ void main() {
 
     expect(running, isTrue);
   });
+
+  test('stopExtraDuty still stops native when backend stop fails', () async {
+    final api = _FailingStopExtraDutyApi();
+    final bridge = MethodChannelTrackingBridge(channel: channel, sessionApi: api);
+
+    await expectLater(bridge.stopExtraDuty(), throwsA(isA<StateError>()));
+
+    expect(calls.map((c) => c.method), contains('stopExtraDuty'));
+  });
+
+  test('startTracking requests permissions and aborts when denied', () async {
+    var requested = false;
+    final bridge = MethodChannelTrackingBridge(
+      channel: channel,
+      ensurePermissions: () async {
+        requested = true;
+        throw StateError('Location permission denied');
+      },
+    );
+
+    await expectLater(
+      bridge.startTracking({'session_type': 'normal_duty'}),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(requested, isTrue);
+    expect(calls.where((c) => c.method == 'startTracking'), isEmpty);
+  });
+}
+
+class _FailingStopExtraDutyApi implements TrackingSessionApi {
+  @override
+  Future<Map<String, dynamic>> startExtraDuty() async => {};
+
+  @override
+  Future<Map<String, dynamic>> startNormalDuty() async => {};
+
+  @override
+  Future<Map<String, dynamic>> stopExtraDuty() async {
+    throw StateError('backend stop failed');
+  }
 }
