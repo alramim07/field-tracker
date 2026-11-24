@@ -1,9 +1,11 @@
 # Deployment
 
 ## Status
-Not deployed. Phase 9 remains pending. Phases 1, 2, 3, and 6 are implemented on `phase-3-employee-app` (local verification recorded in `docs/TESTING.md`), including the admin SPA at `/admin` and the Flutter employee app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`.
+**Phase 9 - Deployment/Release: DEFERRED (not deploying now).**
 
-Before deployment: install/configure Redis and the full `laravel/reverb` runtime, choose MySQL vs MariaDB, build `public/build-admin`, ensure scheduler cron runs every minute, and run the production smoke checklist. Real Android device/emulator FGS smoke and APK build verification are still required in an environment with Android SDK/NDK and devices.
+Phases 1, 2, 3, and 6 are implemented on `phase-6-admin-dashboard` (local verification recorded in `docs/TESTING.md`), including the admin SPA at `/admin` and the Flutter employee app in the separate repo `https://github.com/alramim07/field-tracker-mobile.git`.
+
+Before any future deployment: install/configure Redis and the full `laravel/reverb` runtime, choose MySQL vs MariaDB, build `public/build-admin`, ensure scheduler cron runs every minute, and run the production smoke checklist. Real Android device/emulator FGS smoke and APK build verification are still required in an environment with Android SDK/NDK and devices.
 
 ## Target
 Ubuntu 24.04 LTS, Nginx, PHP 8.3+, MySQL, Redis, Supervisor, Laravel Reverb, HTTPS, backups, monitoring.
@@ -37,3 +39,20 @@ This is required for `tracking:close-expired`, which closes expired normal sessi
 - PHP 8.3.30 (Laragon), MariaDB 12.2.2, Composer 2.9.4, Node 24.14.1
 - DB: `field_tracker`, user `root`, empty password, `127.0.0.1:3306`
 - `php artisan migrate:fresh --seed` for local reset
+
+## Phase 9 Release Checklist (Deferred)
+
+Do not execute until deployment is explicitly requested.
+
+- [ ] Confirm target environment: Ubuntu 24.04 LTS, Nginx, PHP 8.3+, MySQL/MariaDB decision, Redis, Supervisor, HTTPS.
+- [ ] Configure production `.env` secrets and `APP_URL`, `APP_TIMEZONE=Asia/Dhaka`, DB/Redis/Reverb/mail credentials.
+- [ ] Install/configure Redis and full `laravel/reverb` runtime; verify websocket/broadcast auth.
+- [ ] Build admin SPA assets: `npm --prefix resources/admin-ui ci && npm --prefix resources/admin-ui run build`.
+- [ ] Run migrations and seed/admin bootstrap as appropriate for production.
+- [ ] Configure cron: `* * * * * cd /path/to/field-tracker && php artisan schedule:run >> /dev/null 2>&1`.
+- [ ] Configure queue workers/Supervisor for background jobs/broadcast as needed.
+- [ ] Verify storage symlink/permissions for profile photos and logs.
+- [ ] Run backend/admin smoke tests and production checklist.
+- [ ] Complete Phase 3 Android device smoke test (`docs/PHASE_3_DEVICE_SMOKE_TEST.md`) and APK build verification.
+- [ ] Set up backups, monitoring, log rotation, alerting, and rollback plan.
+- [ ] Prepare mobile release config (`API_BASE_URL` production HTTPS), signing, and store/distribution process.
