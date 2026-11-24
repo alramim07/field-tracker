@@ -63,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<HistorySegment> _segments = const [];
   CurrentLocationFix? _currentFix;
   Timer? _ticker;
+  StreamSubscription<Map<String, dynamic>>? _bridgeEventSub;
   UserProfile? _profile;
   int _unreadCount = 0;
 
@@ -72,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _bridgeEventSub = widget.trackingBridge?.events.listen(_handleBridgeEvent);
     _load();
   }
 
@@ -79,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
+    _bridgeEventSub?.cancel();
     super.dispose();
   }
 
@@ -117,36 +120,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } catch (_) {}
   }
 
-  Future<void> _maybeRecordUnexpectedStop(TrackingStatus status) async {
+  Future<void> _observeTrackingStatus(TrackingStatus status) async {
     final store = widget.notificationStore;
     if (store == null) return;
     final session = status.activeSession;
-    if (session == null) return;
-    if (session.isActive) return;
-    if (!session.isNormalDuty) return;
-    final stopReason = session.stopReason ?? '';
-    const scheduled = {
-      'expired',
-      'duty_end_expired',
-      'logout',
-      'midnight_auto_stopped',
-      'manual_extra_stop',
-    };
-    if (scheduled.contains(stopReason)) return;
-    final endedAt = session.endedAt;
-    final expiresAt = session.expiresAt;
-    if (endedAt != null && expiresAt != null && !endedAt.isBefore(expiresAt)) {
-      return;
-    }
     try {
-      await store.addUnexpectedEarlyStop(
-        sessionId: session.sessionUuid,
-        stoppedAt: endedAt ?? _now().toUtc(),
-        dutyEndTime: _profile?.dutyEndTime ?? session.expiresAt?.toLocal().toIso8601String().substring(11, 19),
-        stopReason: stopReason.isEmpty ? 'unexpected_stop' : stopReason,
+      await store.recordTrackingObservation(
+        sessionId: session?.sessionUuid,
+        sessionType: session?.sessionType,
+        isActive: session?.isActive ?? false,
+        stopReason: session?.stopReason,
+        startedAt: session?.startedAt,
+        endedAt: session?.endedAt,
+        expiresAt: session?.expiresAt,
+        dutyEndTime: _profile?.dutyEndTime,
+        observedAt: _now().toUtc(),
       );
       await _refreshUnreadCount();
     } catch (_) {}
+  }
+
+  Future<void> _handleBridgeEvent(Map<String, dynamic> event) async {
+    final store = widget.notificationStore;
+    if (store == null) return;
+    final isRunning = event['is_running'] == true;
+    final stopReason = event['stop_reason']?.toString();
+    final sessionType = event['session_type']?.toString();
+    final sessionId = event['session_uuid']?.toString();
+    final expiresAtRaw = event['expires_at']?.toString();
+    final expiresAt = expiresAtRaw == null ? null : DateTime.tryParse(expiresAtRaw);
+    if (isRunning && (stopReason == null || stopReason.isEmpty)) {
+      return;
+    }
+    try {
+      await store.recordTrackingObservation(
+        sessionId: sessionId,
+        sessionType: sessionType,
+        isActive: isRunning,
+        stopReason: stopReason,
+        startedAt: null,
+        endedAt: isRunning ? null : _now().toUtc(),
+        expiresAt: expiresAt,
+        dutyEndTime: _profile?.dutyEndTime,
+        observedAt: _now().toUtc(),
+      );
+      await _refreshUnreadCount();
+    } catch (_) {}
+    if (!isRunning) {
+      await _refreshStatus();
+    }
   }
 
   Future<void> _checkDayChangeAndMaybeSync({bool initialLoad = false}) async {
@@ -185,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _status = status;
         _configureTicker(status);
       });
-      await _maybeRecordUnexpectedStop(status);
+      await _observeTrackingStatus(status);
     } catch (_) {
       if (!mounted) return;
       setState(() {});
