@@ -92,13 +92,20 @@ class TrackingBridge(
     }
 
     private fun syncState(args: Map<*, *>) {
+        // Token sync is only needed for an active FGS. Avoid starting the service
+        // from background on Android O+ when it is not already running.
+        if (!TrackingRuntime.isRunning()) return
         val intent = Intent(context, TrackingForegroundService::class.java).apply {
             action = TrackingForegroundService.ACTION_SYNC
             args["token"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_AUTH_TOKEN, it) }
             args["base_url"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_BASE_URL, it) }
             args["device_uuid"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_DEVICE_UUID, it) }
         }
-        context.startService(intent)
+        try {
+            context.startService(intent)
+        } catch (_: IllegalStateException) {
+            // App may be backgrounded on Android O+; ignore - next foreground sync/start will resupply token.
+        }
     }
 
     private fun stopTrackingService(reason: String) {
