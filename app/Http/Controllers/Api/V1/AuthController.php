@@ -6,13 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Services\Auth\AuthService;
+use App\Services\Tracking\TrackingSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly AuthService $authService)
-    {
+    public function __construct(
+        private readonly AuthService $authService,
+        private readonly TrackingSessionService $trackingSessionService,
+    ) {
     }
 
     public function login(LoginRequest $request): JsonResponse
@@ -33,7 +36,13 @@ class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
-        $this->authService->logout($request->user());
+        $user = $request->user();
+        $employee = $user->employee;
+        if ($employee) {
+            $this->trackingSessionService->endActiveForLogout($employee, $request->ip());
+        }
+
+        $this->authService->logout($user);
 
         return response()->json(['message' => 'Logged out successfully.']);
     }

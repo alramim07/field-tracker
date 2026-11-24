@@ -23,9 +23,17 @@ class TrackingController extends Controller
         }
 
         $device = Device::query()->where('device_uuid', $request->validated('device_uuid'))->firstOrFail();
-        $session = $this->trackingSessionService->start($employee, $device, $request->ip());
+        $session = $this->trackingSessionService->start(
+            $employee,
+            $device,
+            $request->ip(),
+            $request->validated('mode', 'normal_duty'),
+            $request->validated('client_midnight_at'),
+            $request->validated('client_timezone'),
+            $request->validated('client_now'),
+        );
 
-        return response()->json(['data' => $this->sessionPayload($session)], 201);
+        return response()->json(['data' => $this->sessionPayload($session, $employee)], 201);
     }
 
     public function stop(Request $request): JsonResponse
@@ -37,7 +45,7 @@ class TrackingController extends Controller
 
         $session = $this->trackingSessionService->stop($employee, $request->ip());
 
-        return response()->json(['data' => $this->sessionPayload($session)]);
+        return response()->json(['data' => $this->sessionPayload($session, $employee)]);
     }
 
     public function status(Request $request): JsonResponse
@@ -48,21 +56,32 @@ class TrackingController extends Controller
         }
 
         $session = $this->trackingSessionService->status($employee);
+        $statusMeta = $this->trackingSessionService->statusMeta($employee, $session);
 
         return response()->json([
             'data' => [
                 'server_time' => now()->toISOString(),
-                'active_session' => $session ? $this->sessionPayload($session) : null,
+                'active_session' => $session ? $this->sessionPayload($session, $employee, $statusMeta) : null,
+                'session_type' => $session?->session_type?->value,
+                'counted' => $session?->counted,
+                'can_extend' => $statusMeta['can_extend'],
+                'has_used_extra_today' => $statusMeta['has_used_extra_today'],
             ],
         ]);
     }
 
     /** @return array<string, mixed> */
-    private function sessionPayload(\App\Models\TrackingSession $session): array
+    private function sessionPayload(\App\Models\TrackingSession $session, ?\App\Models\Employee $employee = null, ?array $statusMeta = null): array
     {
+        $statusMeta ??= $employee ? $this->trackingSessionService->statusMeta($employee, $session) : ['can_extend' => false, 'has_used_extra_today' => false];
+
         return [
             'session_uuid' => $session->session_uuid,
             'status' => $session->status->value,
+            'session_type' => $session->session_type?->value,
+            'counted' => $session->counted,
+            'can_extend' => $statusMeta['can_extend'],
+            'has_used_extra_today' => $statusMeta['has_used_extra_today'],
             'started_at' => $session->started_at?->toISOString(),
             'expires_at' => $session->expires_at?->toISOString(),
             'ended_at' => $session->ended_at?->toISOString(),
