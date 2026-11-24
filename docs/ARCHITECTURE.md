@@ -23,7 +23,7 @@
 - Employee self endpoints for history/sessions/reports.
 
 ### Phase 3 — Employee Flutter app + native tracking
-- Flutter app in `apps/field_tracker_mobile/` with auth, device registration, OSM map, travel history, notifications, drawer/profile/photo/password/logout.
+- Flutter app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` with auth, device registration, OSM map, travel history, notifications, drawer/profile/photo/password/logout.
 - Native Kotlin Android foreground tracking service and Flutter method/event bridge; native service handles tracking runtime/FGS behavior.
 - Tracking sessions support `session_type` (`normal_duty`, `extra_duty`), `counted`, and `stop_reason`.
 - Normal duty expires at employee duty end (Asia/Dhaka) and cannot be manually stopped by employee API.

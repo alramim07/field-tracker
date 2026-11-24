@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added - 2026-11-24 (Phase 3 employee mobile tracker)
-- Flutter employee app in `apps/field_tracker_mobile/` with auth, device registration, OSM map, travel history movement/stops, notifications, and drawer/profile/photo/password/logout flows.
+- Flutter employee app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` with auth, device registration, OSM map, travel history movement/stops, notifications, and drawer/profile/photo/password/logout flows.
 - Native Kotlin Android foreground tracking service and Flutter bridge for tracking runtime/state/sync.
 - Tracking session model/API support for `session_type` (`normal_duty`, `extra_duty`), `counted`, and explicit `stop_reason` values including `extended_manual`, `midnight_auto`, and `logout`.
 - Normal duty sessions expire at employee duty end (Asia/Dhaka) and cannot be manually stopped by employee API; extra duty can start once per phone-local day after normal duty ends, requires `client_midnight_at`, and can be manually stopped.
@@ -16,9 +16,9 @@
 ### Verification - 2026-11-24
 - `php artisan test`: **PASS** (68 passed, 329 assertions)
 - `npm --prefix resources/admin-ui run build`: **PASS**
-- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze` (in `apps/field_tracker_mobile`): **PASS** (No issues found)
-- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test` (in `apps/field_tracker_mobile`): **PASS** (22 passed)
-- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug` (in `apps/field_tracker_mobile`): **BLOCKED** (missing Android NDK `28.2.13676358` at `C:\Android\Sdk`)
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze` (in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`): **PASS** (No issues found)
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test` (in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`): **PASS** (22 passed)
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug` (in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`): **BLOCKED** (missing Android NDK `28.2.13676358` at `C:\Android\Sdk`)
 - Real Android device/emulator FGS smoke: **NOT RUN** (no connected device/emulator)
 
 ### Added - 2026-11-24 (Live Map refinements)

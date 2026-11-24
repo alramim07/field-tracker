@@ -1,7 +1,7 @@
 # Deployment
 
 ## Status
-Not deployed. Phase 9 remains pending. Phases 1, 2, 3, and 6 are implemented on `phase-3-employee-app` (local verification recorded in `docs/TESTING.md`), including the admin SPA at `/admin` and the Flutter employee app in `apps/field_tracker_mobile/`.
+Not deployed. Phase 9 remains pending. Phases 1, 2, 3, and 6 are implemented on `phase-3-employee-app` (local verification recorded in `docs/TESTING.md`), including the admin SPA at `/admin` and the Flutter employee app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`.
 
 Before deployment: install/configure Redis and the full `laravel/reverb` runtime, choose MySQL vs MariaDB, build `public/build-admin`, ensure scheduler cron runs every minute, and run the production smoke checklist. Real Android device/emulator FGS smoke and APK build verification are still required in an environment with Android SDK/NDK and devices.
 
@@ -18,11 +18,12 @@ Add a cron entry to run Laravel's scheduler every minute:
 This is required for `tracking:close-expired`, which closes expired normal sessions and midnight-auto-stopped extra-duty sessions.
 
 ## Mobile app (Phase 3)
-- App path: `apps/field_tracker_mobile/`
+- Repo: `https://github.com/alramim07/field-tracker-mobile.git`
+- Local path: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`
 - Flutter binary (this environment): `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat`
 - Build/test commands:
   ```powershell
-  cd apps/field_tracker_mobile
+  cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile"
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat pub get
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test

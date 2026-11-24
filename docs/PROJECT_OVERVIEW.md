@@ -23,7 +23,7 @@ Field Tracker is an enterprise Android live location tracking and management sys
 Completed / implemented on `phase-3-employee-app`:
 - **Phase 1 — Backend foundation:** Laravel 12, MariaDB, schema/migrations/models/enums/factories/seeders, baseline tests.
 - **Phase 2 — Auth/tracking APIs:** Sanctum token auth, device/session APIs, location batch ingestion, latest location, employee self endpoints.
-- **Phase 3 — Employee Flutter app + native tracking:** `apps/field_tracker_mobile/` Flutter app, OSM map, auth/device registration, Kotlin foreground tracking service + bridge, normal/extra duty rules, phone-local day reset/auto-sync, travel history, notifications, drawer/profile/photo/password/logout, additive profile endpoints, scheduler command `tracking:close-expired`, and admin extra-duty audit.
+- **Phase 3 — Employee Flutter app + native tracking:** `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` Flutter app, OSM map, auth/device registration, Kotlin foreground tracking service + bridge, normal/extra duty rules, phone-local day reset/auto-sync, travel history, notifications, drawer/profile/photo/password/logout, additive profile endpoints, scheduler command `tracking:close-expired`, and admin extra-duty audit.
 - **Phase 6 — Admin dashboard + Live Map:** RBAC, SPA cookie auth, admin/tracker user management, duty-time metrics, live location API, broadcast payload/channel auth, React/Tailwind admin UI, OSM-by-default map, collapsible sidebar, dynamic place names, and duty timers.
 
 Remaining / partial:

@@ -6,7 +6,7 @@ Commands run:
 ```powershell
 php artisan test
 npm --prefix resources/admin-ui run build
-cd apps/field_tracker_mobile
+cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile"
 C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze
 C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test
 C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug

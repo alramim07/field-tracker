@@ -104,7 +104,7 @@ Room-based offline sync remains Phase 5, but Phase 3 includes the native Kotlin 
 
 ## Builder calls (sensible defaults, subject to review)
 
-- Flutter app location: `apps/field_tracker_mobile/`.
+- Flutter app location: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`.
 - Android application id: `com.fieldtracker.mobile`. App name: `Field Tracker`.
 - State management: `flutter_riverpod`.
 - Navigation: `go_router`.
@@ -348,7 +348,7 @@ Manual verification:
 
 ## Deliverables
 
-- Flutter project under `apps/field_tracker_mobile/`.
+- Flutter project under `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`.
 - Login, Home, Travel history, Notifications, Update profile, Change password screens.
 - OSM map integration with attribution and one-shot GPS.
 - Native Kotlin FGS integration.

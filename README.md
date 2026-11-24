@@ -5,14 +5,14 @@ Enterprise Android live location tracking and management system.
 ## Current status
 - **Phase 1:** Laravel foundation, DB schema, models/enums/factories/seeders, baseline tests — complete.
 - **Phase 2:** Auth, device registration/revocation, tracking start/stop/status (server-authoritative expiry), location batch ingestion (dedupe, expiry rejection, latest-location newer-recorded_at rule), employee self endpoints, admin skeleton endpoints — complete.
-- **Phase 3:** Flutter employee app (`apps/field_tracker_mobile/`) with OpenStreetMap, auth/device registration, tracking bridge to native Kotlin foreground GPS service, normal/extra duty session handling, phone-local day reset/auto-sync behavior, travel history movement/stops, notifications, drawer/profile/photo/password/logout — implemented on this branch. Real Android device/emulator foreground-service smoke is **not verified** in this environment (no connected device; debug APK build blocked by missing Android NDK 28.2.13676358).
+- **Phase 3:** Flutter employee app (`C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`) with OpenStreetMap, auth/device registration, tracking bridge to native Kotlin foreground GPS service, normal/extra duty session handling, phone-local day reset/auto-sync behavior, travel history movement/stops, notifications, drawer/profile/photo/password/logout — implemented on this branch. Real Android device/emulator foreground-service smoke is **not verified** in this environment (no connected device; debug APK build blocked by missing Android NDK 28.2.13676358).
 - **Phase 6:** Admin dashboard/live map, RBAC, SPA auth, tracker/admin management, dashboard metrics, live location broadcast payload/channel auth — implemented.
 - **Phase 4/5/7/8/9:** Room offline sync hardening, history/reporting expansion, security/perf/load/device hardening, production deployment — pending/partial.
 
 ## Stack
 - Backend: Laravel 12, PHP 8.3+, Sanctum, MariaDB/MySQL-compatible (local dev: MariaDB via Laragon)
 - Realtime: Redis/Reverb planned/runtime pending in this environment
-- Mobile: Flutter employee app + native Kotlin Android foreground service (`apps/field_tracker_mobile/`)
+- Mobile: Flutter employee app + native Kotlin Android foreground service (`C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`)
 - Admin: React + Tailwind Vite SPA in `resources/admin-ui/`
 
 ## Local setup
@@ -52,7 +52,7 @@ Enterprise Android live location tracking and management system.
 ```powershell
 php artisan test
 npm --prefix resources/admin-ui run build
-cd apps/field_tracker_mobile
+cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile"
 C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze
 C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test
 ```
@@ -66,11 +66,12 @@ Latest verified results (2026-11-24, this branch/worktree):
 - Real Android device/emulator FGS smoke: **NOT RUN** — no connected Android device/emulator in this environment.
 
 ## Phase 3 Mobile App (Flutter)
-- Location: `apps/field_tracker_mobile/`
+- Repo: `https://github.com/alramim07/field-tracker-mobile.git`
+- Local path (this environment): `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile`
 - Flutter binary (this environment): `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat`
 - Run/analyze/test:
   ```powershell
-  cd apps/field_tracker_mobile
+  cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile"
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat pub get
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze
   C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test

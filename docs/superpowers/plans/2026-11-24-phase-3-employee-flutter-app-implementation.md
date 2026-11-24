@@ -4,7 +4,7 @@
 
 **Goal:** Ship the employee Flutter app with a native Kotlin foreground tracker, additive Laravel mobile/self-service APIs, scheduled session closure, and admin extra-duty audit so a tracker can run closed-app normal duty, extend once per day, and reset on phone-local date change.
 
-**Architecture:** Extend the existing Laravel 12 Sanctum API with additive session/profile fields, a scheduler, and admin audit payloads; keep admin SPA on Vite/React. Build a new Flutter app in `apps/field_tracker_mobile/` using Riverpod/GoRouter/Dio/flutter_map/geolocator and a Kotlin MethodChannel/EventChannel FGS that owns background location posting. Phase 5 Room sync is out of scope; Phase 3 uses direct batch posting plus status/history refresh.
+**Architecture:** Extend the existing Laravel 12 Sanctum API with additive session/profile fields, a scheduler, and admin audit payloads; keep admin SPA on Vite/React. Build a new Flutter app in `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` using Riverpod/GoRouter/Dio/flutter_map/geolocator and a Kotlin MethodChannel/EventChannel FGS that owns background location posting. Phase 5 Room sync is out of scope; Phase 3 uses direct batch posting plus status/history refresh.
 
 **Tech Stack:** PHP 8.3, Laravel 12, Sanctum, PHPUnit/RefreshDatabase, MySQL-compatible MariaDB, React 19/Vite/Tailwind v4 admin SPA, Flutter 3.50/Dart 3.14, flutter_riverpod, go_router, dio, flutter_secure_storage, shared_preferences, flutter_map, latlong2, geolocator, intl, Kotlin Android FGS.
 
@@ -53,12 +53,12 @@
 - Modify: `resources/admin-ui/src/features/tracker-users/TrackerUsersPage.jsx` — link to details.
 
 ### Flutter / Kotlin
-- Create: `apps/field_tracker_mobile/` Flutter app.
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile` Flutter app.
 - Create: Dart core `lib/main.dart`, `lib/app.dart`, routing, theme, API client, auth/session storage, models, repositories.
 - Create: feature screens `login`, `home`, `travel_history`, `notifications`, `profile`, `change_password`.
 - Create: services `device_registration_service.dart`, `sync_service.dart`, `history_grouping_service.dart`, `notification_store.dart`, `tracker_bridge.dart`.
 - Create: Android Kotlin `android/app/src/main/kotlin/.../tracking/TrackingForegroundService.kt`, `TrackingBridge.kt`, permission/boot/session helpers.
-- Tests: `apps/field_tracker_mobile/test/...` unit/widget tests.
+- Tests: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/...` unit/widget tests.
 
 ## Review Focus
 
@@ -408,15 +408,15 @@ git commit -m "feat: show extra duty audit in tracker user details"
 ## Task 7: Flutter App Scaffold and Auth/Device Registration
 
 **Files:**
-- Create: `apps/field_tracker_mobile/pubspec.yaml`
-- Create: `apps/field_tracker_mobile/lib/main.dart`
-- Create: `apps/field_tracker_mobile/lib/app.dart`
-- Create: `apps/field_tracker_mobile/lib/core/config/app_config.dart`
-- Create: `apps/field_tracker_mobile/lib/core/network/api_client.dart`
-- Create: `apps/field_tracker_mobile/lib/core/storage/token_storage.dart`
-- Create: `apps/field_tracker_mobile/lib/features/auth/...`
-- Create: `apps/field_tracker_mobile/lib/features/device/device_registration_service.dart`
-- Test: `apps/field_tracker_mobile/test/features/auth/login_screen_test.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilepubspec.yaml`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/main.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/app.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/core/config/app_config.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/core/network/api_client.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/core/storage/token_storage.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/auth/...`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/device/device_registration_service.dart`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/auth/login_screen_test.dart`
 
 **Interfaces:**
 - Consumes: `POST /api/v1/login`, `POST /api/v1/device/register`, `GET /api/v1/me`.
@@ -437,7 +437,7 @@ test('device registration reuses persisted uuid', () async {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test`
 Expected: FAIL because project/tests do not exist.
 
 - [ ] **Step 3: Implement scaffold and auth flow**
@@ -446,25 +446,25 @@ Create Flutter project structure, dependencies, go_router routes, Dio client wit
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/auth`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/auth`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/field_tracker_mobile
+git add <mobile-repo-files>
 git commit -m "feat: scaffold flutter app with auth and device registration"
 ```
 
 ## Task 8: Home, Map, Timer, Sync, and Travel History UI
 
 **Files:**
-- Create: `apps/field_tracker_mobile/lib/features/home/...`
-- Create: `apps/field_tracker_mobile/lib/features/history/...`
-- Create: `apps/field_tracker_mobile/lib/features/sync/sync_service.dart`
-- Create: `apps/field_tracker_mobile/lib/features/history/history_grouping_service.dart`
-- Test: `apps/field_tracker_mobile/test/features/home/home_screen_test.dart`
-- Test: `apps/field_tracker_mobile/test/features/history/history_grouping_test.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/home/...`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/history/...`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/sync/sync_service.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/history/history_grouping_service.dart`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/home/home_screen_test.dart`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/history/history_grouping_test.dart`
 
 **Interfaces:**
 - Consumes: `/tracking/status`, `/me/location-history`, `/me`, geolocator one-shot fix.
@@ -490,7 +490,7 @@ testWidgets('resets to fresh day state after phone date changes', (tester) async
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/home test/features/history`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/home test/features/history`
 Expected: FAIL.
 
 - [ ] **Step 3: Implement UI and grouping**
@@ -499,25 +499,25 @@ Build home screen header/map/timer card, manual sync, current-day timeline. Use 
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/home test/features/history`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/home test/features/history`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/field_tracker_mobile/lib/features/home apps/field_tracker_mobile/lib/features/history apps/field_tracker_mobile/lib/features/sync apps/field_tracker_mobile/test/features/home apps/field_tracker_mobile/test/features/history
+git add <mobile-repo-files>\\lib/features/home C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/history C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/sync C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/home C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/history
 git commit -m "feat: add mobile home map timer and travel history"
 ```
 
 ## Task 9: Native Kotlin FGS Bridge and Tracking Lifecycle
 
 **Files:**
-- Create: `apps/field_tracker_mobile/android/app/src/main/kotlin/com/fieldtracker/mobile/tracking/TrackingForegroundService.kt`
-- Create: `apps/field_tracker_mobile/android/app/src/main/kotlin/com/fieldtracker/mobile/tracking/TrackingBridge.kt`
-- Modify: `apps/field_tracker_mobile/android/app/src/main/AndroidManifest.xml`
-- Create: `apps/field_tracker_mobile/lib/features/tracking/tracker_bridge.dart`
-- Modify: `apps/field_tracker_mobile/lib/features/home/...`
-- Test: `apps/field_tracker_mobile/test/features/tracking/tracker_bridge_test.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobileandroid/app/src/main/kotlin/com/fieldtracker/mobile/tracking/TrackingForegroundService.kt`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobileandroid/app/src/main/kotlin/com/fieldtracker/mobile/tracking/TrackingBridge.kt`
+- Modify: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobileandroid/app/src/main/AndroidManifest.xml`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/tracking/tracker_bridge.dart`
+- Modify: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/home/...`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/tracking/tracker_bridge_test.dart`
 
 **Interfaces:**
 - Consumes: backend session payload (`session_uuid, session_type, expires_at, device_uuid, token/baseUrl` as appropriate).
@@ -533,7 +533,7 @@ test('startTracking sends normal duty payload to method channel', () async {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/tracking`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/tracking`
 Expected: FAIL.
 
 - [ ] **Step 3: Implement Kotlin FGS and Flutter bridge**
@@ -542,26 +542,26 @@ Add foreground service, notification, location callback, batch POST, duty-end/mi
 
 - [ ] **Step 4: Run tests and Android build check**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/tracking`
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/tracking`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug`
 Expected: Dart tests PASS; debug APK build PASS on machine with Android SDK.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/field_tracker_mobile/android apps/field_tracker_mobile/lib/features/tracking apps/field_tracker_mobile/test/features/tracking
+git add <mobile-repo-files>\\android C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/tracking C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/tracking
 git commit -m "feat: add native foreground tracking service"
 ```
 
 ## Task 10: Notifications, Drawer, Profile, Password, Logout
 
 **Files:**
-- Create: `apps/field_tracker_mobile/lib/features/notifications/...`
-- Create: `apps/field_tracker_mobile/lib/features/profile/...`
-- Create: `apps/field_tracker_mobile/lib/features/drawer/app_drawer.dart`
-- Modify: `apps/field_tracker_mobile/lib/features/home/...`
-- Test: `apps/field_tracker_mobile/test/features/profile/profile_screen_test.dart`
-- Test: `apps/field_tracker_mobile/test/features/notifications/notification_store_test.dart`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/notifications/...`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/profile/...`
+- Create: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/drawer/app_drawer.dart`
+- Modify: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/home/...`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/profile/profile_screen_test.dart`
+- Test: `C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobiletest/features/notifications/notification_store_test.dart`
 
 **Interfaces:**
 - Consumes: `/me`, `/me/profile`, `/me/photo`, `/me/password`, `/logout`, local notification store.
@@ -581,7 +581,7 @@ test('notification store marks unexpected early stop as unread', () async {
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/profile test/features/notifications`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/profile test/features/notifications`
 Expected: FAIL.
 
 - [ ] **Step 3: Implement screens and local store**
@@ -590,13 +590,13 @@ Implement drawer, notifications screen, profile screen, change password screen. 
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/profile test/features/notifications`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test test/features/profile test/features/notifications`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add apps/field_tracker_mobile/lib/features/drawer apps/field_tracker_mobile/lib/features/profile apps/field_tracker_mobile/lib/features/notifications
+git add <mobile-repo-files>\\lib/features/drawer C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/profile C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobilelib/features/notifications
 git commit -m "feat: add mobile drawer profile and notifications"
 ```
 
@@ -624,8 +624,8 @@ Create a short verification checklist in the plan execution notes: all new endpo
 
 Run: `php artisan test`
 Run: `npm --prefix resources/admin-ui run build`
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze`
-Run: `cd apps/field_tracker_mobile && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze`
+Run: `cd "C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile" && C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test`
 Expected: all pass; record any environment-limited Android device smoke as not run.
 
 - [ ] **Step 3: Update docs with actual results**
@@ -640,7 +640,7 @@ Expected: only intended files modified.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add README.md docs apps/field_tracker_mobile
+git add README.md docs C:\Users\Lyns Romero\Desktop\Projects\field-tracker-mobile
 git commit -m "docs: record phase 3 mobile tracker implementation"
 ```
 
