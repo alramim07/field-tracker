@@ -22,12 +22,23 @@ class HistorySegment {
     required this.points,
     required this.startAt,
     required this.endAt,
+    this.distanceMeters = 0,
+    this.startLabel = '',
+    this.endLabel = '',
   });
 
   final SegmentType type;
   final List<HistoryPoint> points;
   final DateTime startAt;
   final DateTime endAt;
+  final double distanceMeters;
+  final String startLabel;
+  final String endLabel;
+
+  Duration get duration {
+    final d = endAt.difference(startAt);
+    return d.isNegative ? Duration.zero : d;
+  }
 }
 
 class HistoryGroupingService {
@@ -71,17 +82,24 @@ class HistoryGroupingService {
         points: List.unmodifiable(cluster),
         startAt: cluster.first.recordedAt,
         endAt: cluster.last.recordedAt,
+        distanceMeters: 0,
+        startLabel: _coordLabel(cluster.first),
+        endLabel: _coordLabel(cluster.last),
       ));
       return;
     }
 
     final point = cluster.first;
     if (next != null && _distanceMeters(point, next) > stopRadiusMeters) {
+      final distance = _distanceMeters(point, next);
       segments.add(HistorySegment(
         type: SegmentType.movement,
-        points: List.unmodifiable(cluster),
+        points: List.unmodifiable([point, next]),
         startAt: point.recordedAt,
-        endAt: point.recordedAt,
+        endAt: next.recordedAt,
+        distanceMeters: distance,
+        startLabel: _coordLabel(point),
+        endLabel: _coordLabel(next),
       ));
     } else {
       // Single trailing point with no next movement - treat as stop.
@@ -90,6 +108,9 @@ class HistoryGroupingService {
         points: List.unmodifiable(cluster),
         startAt: point.recordedAt,
         endAt: point.recordedAt,
+        distanceMeters: 0,
+        startLabel: _coordLabel(point),
+        endLabel: _coordLabel(point),
       ));
     }
   }
@@ -102,18 +123,36 @@ class HistoryGroupingService {
           merged.last.type == SegmentType.movement &&
           seg.type == SegmentType.movement) {
         final last = merged.removeLast();
-        final pts = [...last.points, ...seg.points];
+        final pts = <HistoryPoint>[...last.points];
+        for (final p in seg.points) {
+          if (pts.isEmpty || !_samePoint(pts.last, p)) {
+            pts.add(p);
+          }
+        }
         merged.add(HistorySegment(
           type: SegmentType.movement,
           points: List.unmodifiable(pts),
           startAt: last.startAt,
           endAt: seg.endAt,
+          distanceMeters: last.distanceMeters + seg.distanceMeters,
+          startLabel: last.startLabel,
+          endLabel: seg.endLabel,
         ));
       } else {
         merged.add(seg);
       }
     }
     return merged;
+  }
+
+  bool _samePoint(HistoryPoint a, HistoryPoint b) {
+    return a.latitude == b.latitude &&
+        a.longitude == b.longitude &&
+        a.recordedAt == b.recordedAt;
+  }
+
+  String _coordLabel(HistoryPoint p) {
+    return '${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)}';
   }
 
   double _distanceMeters(HistoryPoint a, HistoryPoint b) {

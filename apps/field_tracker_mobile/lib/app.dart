@@ -66,7 +66,7 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
     _dayStateStore = MemoryDayStateStore();
     _syncService = AppSyncService(tasks: [
       () async {
-        await _apiClient.dio.get('/me');
+        await _profileRepository.fetchProfile();
       },
       () async {
         await _trackingStatusRepository.fetchStatus();

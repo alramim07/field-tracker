@@ -47,7 +47,8 @@ class TrackingBridge(
             }
 
             "syncState" -> {
-                TrackingRuntime.publishState()
+                val args = call.arguments as? Map<*, *> ?: emptyMap<Any, Any>()
+                syncState(args)
                 result.success(null)
             }
 
@@ -88,6 +89,16 @@ class TrackingBridge(
         } else {
             context.startService(intent)
         }
+    }
+
+    private fun syncState(args: Map<*, *>) {
+        val intent = Intent(context, TrackingForegroundService::class.java).apply {
+            action = TrackingForegroundService.ACTION_SYNC
+            args["token"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_AUTH_TOKEN, it) }
+            args["base_url"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_BASE_URL, it) }
+            args["device_uuid"]?.toString()?.let { putExtra(TrackingForegroundService.EXTRA_DEVICE_UUID, it) }
+        }
+        context.startService(intent)
     }
 
     private fun stopTrackingService(reason: String) {

@@ -66,6 +66,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _bridgeEventSub;
   UserProfile? _profile;
   int _unreadCount = 0;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _mapSectionKey = GlobalKey();
+  final GlobalKey _historySectionKey = GlobalKey();
 
   DateTime _now() => (widget.now ?? DateTime.now)();
 
@@ -82,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
     _bridgeEventSub?.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -263,8 +267,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _syncing = false;
         _syncMessage = result.ok ? 'Synced' : (result.message ?? 'Sync failed');
       });
+      await _loadProfile();
       await _refreshStatus();
       await _refreshLocationAndHistory();
+      await _refreshUnreadCount();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -362,6 +368,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+
+  void _scrollToCurrentLocation() {
+    final ctx = _mapSectionKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+    }
+  }
+
+  void _scrollToTravelHistory() {
+    final ctx = _historySectionKey.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.1,
+      );
+      return;
+    }
+    _scrollToCurrentLocation();
   }
 
   bool get _isFreshDayReset {
@@ -494,7 +526,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               dutyEndTime: null,
               totalTrackingSeconds: 0,
             ),
-        onHome: () => Navigator.of(context).maybePop(),
+        onHome: () {
+          Navigator.of(context).maybePop();
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        },
+        onCurrentLocation: () {
+          Navigator.of(context).maybePop();
+          _scrollToCurrentLocation();
+        },
+        onTravelHistory: () {
+          Navigator.of(context).maybePop();
+          _scrollToTravelHistory();
+        },
         onNotifications: () {
           Navigator.of(context).maybePop();
           _openNotifications();
@@ -518,6 +567,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           : RefreshIndicator(
               onRefresh: () => _performSync(),
               child: ListView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16),
                 children: [
                   if (_syncMessage != null)
@@ -529,12 +579,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
-                  _buildMapCard(context),
+                  KeyedSubtree(
+                    key: _mapSectionKey,
+                    child: _buildMapCard(context),
+                  ),
                   const SizedBox(height: 16),
                   _buildTimerCard(context),
                   if (_showTravelHistory) ...[
                     const SizedBox(height: 16),
-                    _buildTimeline(context),
+                    KeyedSubtree(
+                      key: _historySectionKey,
+                      child: _buildTimeline(context),
+                    ),
                   ],
                 ],
               ),
@@ -679,29 +735,87 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildTimeline(BuildContext context) {
+    final distanceMeters = _segments
+        .where((s) => s.type == SegmentType.movement)
+        .fold<double>(0, (sum, s) => sum + s.distanceMeters);
+    final placeCount = _segments.where((s) => s.type == SegmentType.stop).length;
+
     return Card(
+      key: const Key('travel_history_card'),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Today\'s travel history', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Place names shown as coordinates (reverse geocoding not enabled).',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 8),
+            if (_segments.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Distance moved: ${_fmtDistance(distanceMeters)} · Places: $placeCount',
+                  key: const Key('travel_history_summary'),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
             if (_segments.isEmpty)
               const Text('No movement recorded yet')
             else
               ..._segments.map((s) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(s.type == SegmentType.stop ? Icons.place : Icons.route),
-                    title: Text(s.type == SegmentType.stop ? 'Stopped period' : 'Movement segment'),
-                    subtitle: Text(
-                      '${_fmtTime(s.startAt)} - ${_fmtTime(s.endAt)} · ${s.points.length} pings',
-                    ),
+                    title: Text(_segmentTitle(s)),
+                    subtitle: Text(_segmentSubtitle(s)),
                   )),
           ],
         ),
       ),
     );
+  }
+
+  String _segmentTitle(HistorySegment s) {
+    if (s.type == SegmentType.stop) {
+      final label = s.startLabel.isNotEmpty ? s.startLabel : _coordLabelFromPoint(s.points.first);
+      return 'Stopped at $label';
+    }
+    final from = s.startLabel.isNotEmpty ? s.startLabel : _coordLabelFromPoint(s.points.first);
+    final to = s.endLabel.isNotEmpty ? s.endLabel : _coordLabelFromPoint(s.points.last);
+    return 'Moved from $from to $to';
+  }
+
+  String _segmentSubtitle(HistorySegment s) {
+    final time = '${_fmtTime(s.startAt)} - ${_fmtTime(s.endAt)}';
+    final duration = _fmtDurationShort(s.duration);
+    if (s.type == SegmentType.stop) {
+      return '$time · $duration';
+    }
+    final distance = _fmtDistance(s.distanceMeters);
+    return '$time · $duration · $distance';
+  }
+
+  String _coordLabelFromPoint(HistoryPoint p) {
+    return '${p.latitude.toStringAsFixed(5)}, ${p.longitude.toStringAsFixed(5)}';
+  }
+
+  String _fmtDistance(double meters) {
+    if (meters >= 1000) {
+      return '${(meters / 1000).toStringAsFixed(2)} km';
+    }
+    return '${meters.toStringAsFixed(0)} m';
+  }
+
+  String _fmtDurationShort(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes % 60;
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    }
+    return '${minutes}m';
   }
 
   String _fmtTime(DateTime dt) {

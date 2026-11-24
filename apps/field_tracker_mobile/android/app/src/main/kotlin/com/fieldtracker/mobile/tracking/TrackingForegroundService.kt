@@ -55,6 +55,8 @@ class TrackingForegroundService : Service(), LocationListener {
     private var flushRunnable: Runnable? = null
     private var expiryRunnable: Runnable? = null
     private var midnightRunnable: Runnable? = null
+    private var consecutiveFailures: Int = 0
+    private var nextRetryAtMillis: Long = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -68,7 +70,18 @@ class TrackingForegroundService : Service(), LocationListener {
         when (intent?.action) {
             ACTION_START -> handleStart(intent)
             ACTION_STOP -> handleStop(intent.getStringExtra(EXTRA_STOP_REASON) ?: "stopped")
-            ACTION_SYNC -> TrackingRuntime.publishState()
+            ACTION_SYNC -> {
+                if (intent.hasExtra(EXTRA_AUTH_TOKEN)) {
+                    authToken = intent.getStringExtra(EXTRA_AUTH_TOKEN) ?: authToken
+                }
+                if (intent.hasExtra(EXTRA_BASE_URL)) {
+                    baseUrl = intent.getStringExtra(EXTRA_BASE_URL) ?: baseUrl
+                }
+                if (intent.hasExtra(EXTRA_DEVICE_UUID)) {
+                    deviceUuid = intent.getStringExtra(EXTRA_DEVICE_UUID) ?: deviceUuid
+                }
+                TrackingRuntime.publishState()
+            }
             else -> {
                 // Resume/reconcile hook: if service restarted by system, try to restore.
                 restoreAndReconcile()
@@ -86,6 +99,8 @@ class TrackingForegroundService : Service(), LocationListener {
         baseUrl = intent.getStringExtra(EXTRA_BASE_URL) ?: baseUrl
         clientMidnightAt = intent.getStringExtra(EXTRA_CLIENT_MIDNIGHT_AT) ?: clientMidnightAt
 
+        consecutiveFailures = 0
+        nextRetryAtMillis = 0L
         persistState()
         startForeground(NOTIFICATION_ID, buildNotification("Tracking active"))
         TrackingRuntime.setRunning(
@@ -281,12 +296,15 @@ class TrackingForegroundService : Service(), LocationListener {
         }
     }
 
+    private enum class BatchPostResult { SUCCESS, TRANSIENT_FAILURE, TERMINAL_AUTH_FAILURE }
+
     private fun flushBuffer() {
         val token = authToken
         val base = baseUrl
         val devUuid = deviceUuid
         if (token.isNullOrBlank() || base.isNullOrBlank() || devUuid.isNullOrBlank()) return
         if (buffer.isEmpty()) return
+        if (System.currentTimeMillis() < nextRetryAtMillis) return
 
         val batch = mutableListOf<Map<String, Any?>>()
         while (batch.size < MAX_BATCH && !buffer.isEmpty()) {
@@ -295,14 +313,39 @@ class TrackingForegroundService : Service(), LocationListener {
         }
         if (batch.isEmpty()) return
 
-        val ok = postBatch(base, token, devUuid, batch)
-        if (!ok) {
-            // Requeue at front best-effort by adding back; order may degrade but data preserved.
-            batch.forEach { buffer.add(it) }
+        when (postBatch(base, token, devUuid, batch)) {
+            BatchPostResult.SUCCESS -> {
+                consecutiveFailures = 0
+                nextRetryAtMillis = 0L
+            }
+            BatchPostResult.TERMINAL_AUTH_FAILURE -> {
+                // Token revoked/invalid: stop tracking and wait for app resync.
+                buffer.clear()
+                mainHandler.post { handleTerminalAuthFailure() }
+            }
+            BatchPostResult.TRANSIENT_FAILURE -> {
+                // Requeue at end best-effort; order may degrade but data preserved.
+                batch.forEach { buffer.add(it) }
+                consecutiveFailures += 1
+                val exp = minOf(consecutiveFailures - 1, 6)
+                val backoff = minOf(RETRY_MAX_MS, RETRY_BASE_MS * (1L shl exp))
+                val jitter = kotlin.random.Random.nextLong(0L, max(1L, backoff / 4))
+                nextRetryAtMillis = System.currentTimeMillis() + backoff + jitter
+            }
         }
     }
 
-    private fun postBatch(base: String, token: String, devUuid: String, batch: List<Map<String, Any?>>): Boolean {
+    private fun handleTerminalAuthFailure() {
+        if (!TrackingRuntime.isRunning()) return
+        cancelSchedules()
+        stopLocationUpdates()
+        TrackingRuntime.clear("auth_revoked")
+        clearPersistedState()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    private fun postBatch(base: String, token: String, devUuid: String, batch: List<Map<String, Any?>>): BatchPostResult {
         return try {
             val url = URL(base.trimEnd('/') + "/locations/batch")
             val conn = (url.openConnection() as HttpURLConnection).apply {
@@ -325,9 +368,13 @@ class TrackingForegroundService : Service(), LocationListener {
             val stream = if (code in 200..299) conn.inputStream else conn.errorStream
             stream?.bufferedReader()?.use(BufferedReader::readText)
             conn.disconnect()
-            code in 200..299
+            when {
+                code in 200..299 -> BatchPostResult.SUCCESS
+                code == 401 || code == 403 -> BatchPostResult.TERMINAL_AUTH_FAILURE
+                else -> BatchPostResult.TRANSIENT_FAILURE
+            }
         } catch (_: Exception) {
-            false
+            BatchPostResult.TRANSIENT_FAILURE
         }
     }
 
@@ -376,15 +423,17 @@ class TrackingForegroundService : Service(), LocationListener {
 
     private fun persistState() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        // Do not persist raw auth token in plaintext. Token is kept in-memory and
+        // must be re-supplied by Flutter via startTracking/syncState.
         prefs.edit()
             .putBoolean(KEY_RUNNING, true)
             .putString(KEY_SESSION_UUID, sessionUuid)
             .putString(KEY_SESSION_TYPE, sessionType)
             .putString(KEY_EXPIRES_AT, expiresAt)
             .putString(KEY_DEVICE_UUID, deviceUuid)
-            .putString(KEY_AUTH_TOKEN, authToken)
             .putString(KEY_BASE_URL, baseUrl)
             .putString(KEY_CLIENT_MIDNIGHT_AT, clientMidnightAt)
+            .remove(KEY_AUTH_TOKEN)
             .apply()
     }
 
@@ -403,9 +452,18 @@ class TrackingForegroundService : Service(), LocationListener {
         sessionType = prefs.getString(KEY_SESSION_TYPE, null)
         expiresAt = prefs.getString(KEY_EXPIRES_AT, null)
         deviceUuid = prefs.getString(KEY_DEVICE_UUID, null)
-        authToken = prefs.getString(KEY_AUTH_TOKEN, null)
         baseUrl = prefs.getString(KEY_BASE_URL, null)
         clientMidnightAt = prefs.getString(KEY_CLIENT_MIDNIGHT_AT, null)
+
+        // Token is intentionally not persisted in plaintext. After process restart
+        // the app must resync and call startTracking/syncState with a fresh token.
+        if (authToken.isNullOrBlank()) {
+            TrackingRuntime.clear("awaiting_resync")
+            clearPersistedState()
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return
+        }
 
         // Reconcile expired/midnight state.
         val exp = expiresAt
@@ -473,6 +531,8 @@ class TrackingForegroundService : Service(), LocationListener {
         private const val BATCH_SIZE = 10
         private const val MAX_BATCH = 100
         private const val FLUSH_INTERVAL_MS = 60_000L
+        private const val RETRY_BASE_MS = 5_000L
+        private const val RETRY_MAX_MS = 300_000L
 
         private const val PREFS = "tracking_runtime"
         private const val KEY_RUNNING = "running"

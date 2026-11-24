@@ -7,6 +7,8 @@ class AppDrawer extends StatelessWidget {
     super.key,
     required this.profile,
     required this.onHome,
+    required this.onCurrentLocation,
+    required this.onTravelHistory,
     required this.onNotifications,
     required this.onUpdateProfile,
     required this.onChangePassword,
@@ -15,6 +17,8 @@ class AppDrawer extends StatelessWidget {
 
   final UserProfile? profile;
   final VoidCallback onHome;
+  final VoidCallback onCurrentLocation;
+  final VoidCallback onTravelHistory;
   final VoidCallback onNotifications;
   final VoidCallback onUpdateProfile;
   final VoidCallback onChangePassword;
@@ -81,6 +85,18 @@ class AppDrawer extends StatelessWidget {
                     leading: const Icon(Icons.home_outlined),
                     title: const Text('Home'),
                     onTap: onHome,
+                  ),
+                  ListTile(
+                    key: const Key('drawer_current_location'),
+                    leading: const Icon(Icons.my_location_outlined),
+                    title: const Text('Current location'),
+                    onTap: onCurrentLocation,
+                  ),
+                  ListTile(
+                    key: const Key('drawer_travel_history'),
+                    leading: const Icon(Icons.route_outlined),
+                    title: const Text('Travel history'),
+                    onTap: onTravelHistory,
                   ),
                   ListTile(
                     leading: const Icon(Icons.notifications_outlined),

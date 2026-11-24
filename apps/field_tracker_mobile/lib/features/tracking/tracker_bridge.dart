@@ -144,7 +144,15 @@ class MethodChannelTrackingBridge implements TrackingBridge {
 
   @override
   Future<void> syncState() async {
-    await _channel.invokeMethod<void>('syncState');
+    final payload = <String, dynamic>{};
+    payload['base_url'] ??= _baseUrl;
+    if (_tokenProvider != null) {
+      payload['token'] = await _tokenProvider();
+    }
+    if (_deviceUuidProvider != null) {
+      payload['device_uuid'] = await _deviceUuidProvider();
+    }
+    await _channel.invokeMethod<void>('syncState', payload);
   }
 
   @override
