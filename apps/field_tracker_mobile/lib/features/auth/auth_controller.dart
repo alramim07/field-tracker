@@ -25,7 +25,14 @@ class AuthController extends ChangeNotifier {
 
   Future<void> restoreSession() async {
     final current = await _authRepository.currentUser();
-    if (current == null || !current.isEmployee) {
+    if (current == null) {
+      user = null;
+      status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return;
+    }
+    if (!current.isEmployee) {
+      await _authRepository.logout();
       user = null;
       status = AuthStatus.unauthenticated;
       notifyListeners();

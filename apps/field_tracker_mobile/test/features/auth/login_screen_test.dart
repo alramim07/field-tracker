@@ -10,6 +10,7 @@ class FakeAuthRepository implements AuthRepository {
 
   final AuthSession session;
   int loginCalls = 0;
+  int logoutCalls = 0;
 
   @override
   Future<AuthSession> login({
@@ -21,7 +22,9 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    logoutCalls++;
+  }
 
   @override
   Future<AuthUser?> currentUser() async => session.user;
@@ -58,5 +61,6 @@ void main() {
 
     expect(find.text('Employee account required'), findsOneWidget);
     expect(repo.loginCalls, 1);
+    expect(repo.logoutCalls, 1);
   });
 }
