@@ -130,16 +130,26 @@ class NotificationStore {
     // the observation explicitly carries an excluded reason. If another session
     // is active (e.g. extra duty), do not infer an unexpected normal stop.
     if (snapshot != null) {
-      if (isActive) {
-        await _clearActiveNormalSnapshot();
-        return;
-      }
-
       final snapSessionId = snapshot['sessionId'] as String?;
       final snapExpiresAt = DateTime.tryParse(snapshot['expiresAt'] as String? ?? '');
       final snapDutyEnd = snapshot['dutyEndTime'] as String?;
       final sameSessionObserved = sessionId != null && sessionId == snapSessionId;
       final excluded = _isExcludedStopReason(stopReason);
+
+      if (isActive) {
+        final expiredByDutyEnd =
+            snapExpiresAt != null && !now.isBefore(snapExpiresAt.toUtc());
+        if (!expiredByDutyEnd) {
+          await addUnexpectedEarlyStop(
+            sessionId: snapSessionId ?? 'unknown-session',
+            stoppedAt: now.toUtc(),
+            dutyEndTime: snapDutyEnd,
+            stopReason: 'unknown',
+          );
+        }
+        await _clearActiveNormalSnapshot();
+        return;
+      }
 
       if (sameSessionObserved && excluded) {
         await _clearActiveNormalSnapshot();

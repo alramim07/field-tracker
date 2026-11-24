@@ -111,4 +111,39 @@ void main() {
 
     expect(await store.list(), isEmpty);
   });
+
+  test('durable detection alerts when normal duty disappears before expiry and extra duty is active', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final store = NotificationStore(prefs: prefs);
+
+    await store.recordTrackingObservation(
+      sessionId: 'normal-3',
+      sessionType: 'normal_duty',
+      isActive: true,
+      stopReason: null,
+      startedAt: DateTime.utc(2026, 11, 24, 9, 0),
+      endedAt: null,
+      expiresAt: DateTime.utc(2026, 11, 24, 17, 0),
+      dutyEndTime: '17:00:00',
+      observedAt: DateTime.utc(2026, 11, 24, 15, 0),
+    );
+
+    await store.recordTrackingObservation(
+      sessionId: 'extra-1',
+      sessionType: 'extra_duty',
+      isActive: true,
+      stopReason: null,
+      startedAt: DateTime.utc(2026, 11, 24, 16, 30),
+      endedAt: null,
+      expiresAt: DateTime.utc(2026, 11, 25, 0, 0),
+      dutyEndTime: '17:00:00',
+      observedAt: DateTime.utc(2026, 11, 24, 16, 30),
+    );
+
+    final items = await store.list();
+    expect(items, hasLength(1));
+    expect(items.first.sessionId, 'normal-3');
+    expect(items.first.isRead, isFalse);
+  });
 }
