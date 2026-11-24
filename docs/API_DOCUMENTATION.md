@@ -18,10 +18,56 @@ Response `200`:
 Errors: `422` invalid credentials/inactive account.
 
 ### POST `/logout` (auth)
+Revokes the current Sanctum token. If the employee has an active tracking session, backend ends it before token deletion (expired sessions preserve expiry semantics; active non-expired sessions are stopped with `stop_reason=logout`).
 Response `200`: `{ "message": "Logged out successfully." }`
 
 ### GET `/me` (auth)
-Response `200`: `{ "data": { ...user } }`
+Returns the authenticated user. Additive Phase 3 fields:
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "...",
+    "email": "...",
+    "role": "employee",
+    "status": "active",
+    "phone": "...",
+    "photo_url": "https://.../storage/avatars/...",
+    "duty_start_time": "09:00:00",
+    "duty_end_time": "17:00:00",
+    "total_tracking_seconds": 1234,
+    "employee": { "id": 1, "employee_code": "...", "region_id": 1, "area_id": 1, "designation": "..." }
+  }
+}
+```
+`total_tracking_seconds` includes only sessions where `counted=true`.
+
+## Profile (auth)
+
+### PATCH `/me/profile`
+Updates employee self-service profile fields.
+Request (any subset):
+```json
+{ "phone": "01...", "email": "user@example.com" }
+```
+Rules: `phone` nullable string max 50; `email` required when present, valid, unique ignoring current user. Admin-managed fields are not editable here.
+Response `200`: `{ "data": { ...UserResource } }`
+
+### POST `/me/photo`
+Multipart form upload. Field: `photo` (image).
+Response `200`:
+```json
+{ "data": { "photo_url": "https://.../storage/avatars/..." } }
+```
+Replaces previous avatar file when present.
+
+### POST `/me/password`
+Request:
+```json
+{ "current_password": "old", "password": "new-password", "password_confirmation": "new-password" }
+```
+Behavior: updates password and revokes other Sanctum tokens, keeping the current token.
+Response `200`: `{ "message": "Password changed successfully." }`
 
 ## Devices
 
@@ -41,17 +87,69 @@ Errors: `403` for non-admin.
 ## Tracking
 
 ### POST `/tracking/start` (auth, employee)
-Request: `{ "device_uuid": "uuid" }`
-Behavior: server calculates fixed `expires_at` from active policy `duration_minutes`; stores `policy_snapshot`; prevents duplicate active session; validates device ownership/status.
-Response `201`: `{ "data": { "session_uuid": "...", "status": "active", "started_at": "...", "expires_at": "...", "policy_snapshot": {...} } }`
+Request:
+```json
+{
+  "device_uuid": "uuid",
+  "mode": "normal_duty|extra_duty",
+  "client_midnight_at": "2026-11-25T18:00:00+06:00",
+  "client_timezone": "Asia/Dhaka",
+  "client_now": "2026-11-24T17:05:00+06:00"
+}
+```
+Rules:
+- `device_uuid` required, must exist and belong to authenticated active employee device.
+- `mode` optional, defaults to `normal_duty`; allowed `normal_duty|extra_duty`.
+- `client_midnight_at` required when `mode=extra_duty` (ISO8601 date/time).
+- `client_timezone` and `client_now` are accepted optional inputs.
+
+Behavior:
+- Normal duty: server-authoritative `expires_at` from employee `duty_end_time` in `Asia/Dhaka`; cannot start after duty end for that day; duplicate active session rejected.
+- Extra duty: allowed only after normal duty ended, only once per phone-local day, expires at `client_midnight_at` boundary; creates `session_type=extra_duty`, `counted=true`.
+- Session carries `policy_snapshot`.
+
+Response `201`:
+```json
+{
+  "data": {
+    "session_uuid": "...",
+    "status": "active",
+    "session_type": "normal_duty",
+    "counted": true,
+    "can_extend": false,
+    "has_used_extra_today": false,
+    "started_at": "...",
+    "expires_at": "...",
+    "ended_at": null,
+    "stop_reason": null,
+    "device_id": 1,
+    "tracking_policy_id": 1,
+    "policy_snapshot": {}
+  }
+}
+```
 
 ### POST `/tracking/stop` (auth, employee)
-Manually stops active session. Response `200` with session payload.
+Manual stop is allowed **only for extra duty** active sessions. Normal duty manual stop returns `422`.
+Extra duty manual stop sets `status=stopped`, `stop_reason=extended_manual`.
+Response `200` with session payload.
 
 ### GET `/tracking/status` (auth, employee)
+Query: optional `client_midnight_at` (ISO8601) to evaluate phone-local day metadata.
+Behavior: if latest session is active and expired, backend marks it expired before responding (`normal_duty` -> `EXPIRED/expired`, `extra_duty` forgotten -> `EXPIRED/midnight_auto`, `counted=false`).
+
 Response `200`:
 ```json
-{ "data": { "server_time": "...", "active_session": { ...session|null } } }
+{
+  "data": {
+    "server_time": "...",
+    "active_session": { "...session payload or null..." },
+    "session_type": "normal_duty|extra_duty|null",
+    "counted": true,
+    "can_extend": false,
+    "has_used_extra_today": false
+  }
+}
 ```
 
 ## Location Ingestion
@@ -100,5 +198,33 @@ Returns summary counts: `total_sessions`, `active_sessions`, `total_locations`.
 - `GET /admin/tracking-policies`
 - `GET /admin/audit-logs`
 - `GET /admin/live-locations`
+- `GET /admin/dashboard/summary` (permission `dashboard.view`)
+- `GET/POST /admin/tracker-users`, `GET/PUT/DELETE /admin/tracker-users/{tracker_user}` (permission-gated; create/edit/delete per tracker_users permissions)
+- `GET/POST /admin/admin-users`, `GET /admin/admin-users/{admin_user}`, `PUT /admin/admin-users/{admin_user}/permissions` (super-admin guarded where applicable)
 
-All return paginated JSON. Non-admin receives `403`.
+### Tracker user detail additive field: `extra_duty_audit`
+`GET /admin/tracker-users/{id}` includes `extra_duty_audit`: forgotten extra-duty sessions where `session_type=extra_duty` and `counted=false`.
+
+```json
+{
+  "data": {
+    "id": 1,
+    "...": "...",
+    "extra_duty_audit": [
+      {
+        "session_uuid": "...",
+        "started_at": "...",
+        "ended_at": "...",
+        "stop_reason": "midnight_auto",
+        "duration_seconds": 3600,
+        "counted": false,
+        "locations": [
+          { "id": 1, "latitude": 23.7, "longitude": 90.4, "accuracy": 10.0, "recorded_at": "..." }
+        ]
+      }
+    ]
+  }
+}
+```
+
+All admin endpoints return JSON; non-admin receives `403`, missing permission receives `403`.

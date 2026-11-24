@@ -1,9 +1,9 @@
-# Database Schema (Phase 1)
+# Database Schema
 
 ## Tables
 
 ### users
-- id, name, email (unique), password, role (default employee), status (default active), email_verified_at, remember_token, timestamps
+- id, name, email (unique), password, role (default employee), status (default active), designation (nullable), avatar_path (nullable), email_verified_at, remember_token, timestamps
 - Indexes: email unique, role, status
 
 ### regions
@@ -14,7 +14,7 @@
 - Indexes: (region_id, status)
 
 ### employees
-- id, user_id FK unique -> users, employee_code (unique), phone, region_id FK nullable, area_id FK nullable, designation, status, timestamps
+- id, user_id FK unique -> users, employee_code (unique), phone, region_id FK nullable, area_id FK nullable, designation, status, duty_start_time (nullable, time), duty_end_time (nullable, time), timestamps
 - Indexes: (region_id, area_id), status
 
 ### devices
@@ -25,8 +25,11 @@
 - id, name, start_time, end_time, duration_minutes, moving_interval_seconds (default 5), stationary_interval_seconds (default 30), status, created_by FK nullable -> users, timestamps
 
 ### tracking_sessions
-- id, session_uuid (unique), employee_id FK, device_id FK, tracking_policy_id FK nullable, policy_snapshot (json), started_at, expires_at, ended_at, status, stop_reason, timestamps
-- Indexes: expires_at, (employee_id,status), (device_id,status)
+- id, session_uuid (unique), employee_id FK, device_id FK, tracking_policy_id FK nullable, policy_snapshot (json), started_at, expires_at, ended_at, status, stop_reason, session_type (default `normal_duty`), counted (default `true`), timestamps
+- `session_type`: `normal_duty` | `extra_duty`
+- `stop_reason`: `manual`, `expired`, `revoked`, `system`, `extended_manual`, `midnight_auto`, `logout`
+- `counted`: `false` for forgotten extra-duty midnight auto-stop audit sessions; counted sessions contribute to employee total tracking seconds.
+- Indexes: expires_at, (employee_id,status), (device_id,status), (employee_id, session_type, started_at)
 
 ### location_logs
 - id, event_uuid (unique), employee_id FK, device_id FK, session_id FK -> tracking_sessions, latitude(10,7), longitude(10,7), accuracy/speed/bearing/altitude decimal nullable, battery_level tinyint nullable, recorded_at, received_at, timestamps

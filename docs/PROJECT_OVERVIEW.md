@@ -7,33 +7,32 @@ Field Tracker is an enterprise Android live location tracking and management sys
 - An attendance management system.
 - Covert tracking. Tracking is explicit, session-based, and visible to employees.
 
-## Core capabilities (target)
+## Core capabilities
 - Employee login and authorized device registration
-- Explicit Start Duty / Stop Duty
-- Fixed server-authoritative tracking session expiry
-- Native Android foreground service location collection (Kotlin)
-- Flutter employee UI
-- Offline location queue + batch sync
+- Explicit Start Duty; normal duty auto-stops at duty end (server-authoritative expiry)
+- Extra duty extension once per phone-local day after normal duty ends; manual stop for extra duty only
+- Forgotten extra duty auto-stops at phone-local midnight as uncounted; admin audit retains start/end/locations
+- Native Android foreground service location collection (Kotlin) bridged to Flutter
+- Flutter employee UI with OSM map, travel history, notifications, profile/photo/password, logout
+- Location batch ingestion with dedupe and newer-recorded_at latest-location rule
 - Live admin dashboard with OpenStreetMap by default and Google Maps retained for later activation
-- Private WebSocket updates for live locations via Laravel Reverb
-- Historical route visualization and reporting
+- Private WebSocket updates for live locations via Laravel Reverb (payload/channel auth implemented; runtime pending)
 - RBAC, audit logging, secure API
 
 ## Current status
-Completed:
+Completed / implemented on `phase-3-employee-app`:
 - **Phase 1 — Backend foundation:** Laravel 12, MariaDB, schema/migrations/models/enums/factories/seeders, baseline tests.
 - **Phase 2 — Auth/tracking APIs:** Sanctum token auth, device/session APIs, location batch ingestion, latest location, employee self endpoints.
+- **Phase 3 — Employee Flutter app + native tracking:** `apps/field_tracker_mobile/` Flutter app, OSM map, auth/device registration, Kotlin foreground tracking service + bridge, normal/extra duty rules, phone-local day reset/auto-sync, travel history, notifications, drawer/profile/photo/password/logout, additive profile endpoints, scheduler command `tracking:close-expired`, and admin extra-duty audit.
 - **Phase 6 — Admin dashboard + Live Map:** RBAC, SPA cookie auth, admin/tracker user management, duty-time metrics, live location API, broadcast payload/channel auth, React/Tailwind admin UI, OSM-by-default map, collapsible sidebar, dynamic place names, and duty timers.
 
-Remaining (6 phases):
-- **Phase 3** — Flutter employee app.
-- **Phase 4** — Native Kotlin FGS tracking engine.
-- **Phase 5** — Room offline queue + batch sync.
-- **Phase 7** — History/reporting.
+Remaining / partial:
+- **Phase 4/5** — Native tracking hardening and Room/offline sync robustness beyond current Phase 3 implementation.
+- **Phase 7** — History/reporting expansion.
 - **Phase 8** — Security, performance, device/load testing.
 - **Phase 9** — Production deployment.
 
-Latest verification: `php artisan test` → **50 passed, 230 assertions**; admin UI production build → **PASS**.
+Latest verification (2026-11-24): `php artisan test` → **68 passed, 329 assertions**; `npm --prefix resources/admin-ui run build` → **PASS**; `flutter analyze` → **PASS** (no issues); `flutter test` → **PASS** (22 passed). `flutter build apk --debug` **BLOCKED** (missing Android NDK 28.2.13676358 at `C:\Android\Sdk`). Real Android device/emulator FGS smoke **NOT RUN**.
 
 ## Tech stack
 - Backend: Laravel 12, Sanctum (mobile Bearer + admin SPA cookie), MySQL/MariaDB-compatible, app timezone `Asia/Dhaka`; Redis planned for queue/cache.

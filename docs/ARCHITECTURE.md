@@ -22,6 +22,16 @@
 - Location batch ingestion with `event_uuid` dedupe, newer-`recorded_at` rule, and latest location update.
 - Employee self endpoints for history/sessions/reports.
 
+### Phase 3 — Employee Flutter app + native tracking
+- Flutter app in `apps/field_tracker_mobile/` with auth, device registration, OSM map, travel history, notifications, drawer/profile/photo/password/logout.
+- Native Kotlin Android foreground tracking service and Flutter method/event bridge; native service handles tracking runtime/FGS behavior.
+- Tracking sessions support `session_type` (`normal_duty`, `extra_duty`), `counted`, and `stop_reason`.
+- Normal duty expires at employee duty end (Asia/Dhaka) and cannot be manually stopped by employee API.
+- Extra duty can start only after normal duty ended, only once per phone-local day, requires `client_midnight_at`, and can be manually stopped (`EXTENDED_MANUAL`).
+- Forgotten extra duty is auto-closed at midnight boundary by `tracking:close-expired` / status expiry handling as `MIDNIGHT_AUTO`, `counted=false`; admin tracker-user detail includes `extra_duty_audit`.
+- Additive profile endpoints: `PATCH /me/profile`, `POST /me/photo`, `POST /me/password`; `/me` includes profile/tracking summary fields.
+- Scheduler registration in `bootstrap/app.php`: `tracking:close-expired` every minute.
+
 ### Phase 6 — Admin dashboard + Live Map
 - DB-backed RBAC permissions layered over `users.role`; super admin bypasses granular checks.
 - Admin SPA cookie auth under `/api/v1/admin/auth/*`; mobile Bearer flow preserved.
@@ -33,17 +43,19 @@
 
 ## Key design rules
 - Server-authoritative session expiry and ownership validation.
+- Normal duty is duty-window driven and not manually stoppable by employee API; extra duty is explicit, once/day, manually stoppable, and midnight-auto-stopped as uncounted when forgotten.
 - Controllers thin; Form Requests validate; Policies authorize; Services contain business logic.
 - Latest location updated only by newer `recorded_at`.
 - Duplicate location events rejected by `event_uuid`.
 - Private authenticated WebSocket channels for live locations.
 - Live-location payloads expose only authorized fields.
+- Scheduler/cron must run `php artisan schedule:run` every minute for `tracking:close-expired`.
 
-## Pending
-- Phase 3: Flutter app.
-- Phase 4: Kotlin FGS tracking engine.
-- Phase 5: Room offline sync.
+## Pending / known gaps
+- Real Android device/emulator foreground-service smoke verification (no connected device in this environment).
+- Android debug APK build currently blocked in this environment by missing NDK `28.2.13676358` at `C:\Android\Sdk`.
+- Room/offline sync hardening beyond current Phase 3 behavior.
 - Full `laravel/reverb` runtime install/process (channel auth and payload are already implemented and tested).
-- Phase 7: History/reporting.
-- Phase 8: Security/perf/device/load testing.
-- Phase 9: Production deployment.
+- Phase 7 history/reporting expansion.
+- Phase 8 security/perf/device/load testing.
+- Phase 9 production deployment.

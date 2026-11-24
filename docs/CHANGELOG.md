@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### Added - 2026-11-24 (Phase 3 employee mobile tracker)
+- Flutter employee app in `apps/field_tracker_mobile/` with auth, device registration, OSM map, travel history movement/stops, notifications, and drawer/profile/photo/password/logout flows.
+- Native Kotlin Android foreground tracking service and Flutter bridge for tracking runtime/state/sync.
+- Tracking session model/API support for `session_type` (`normal_duty`, `extra_duty`), `counted`, and explicit `stop_reason` values including `extended_manual`, `midnight_auto`, and `logout`.
+- Normal duty sessions expire at employee duty end (Asia/Dhaka) and cannot be manually stopped by employee API; extra duty can start once per phone-local day after normal duty ends, requires `client_midnight_at`, and can be manually stopped.
+- Forgotten extra duty auto-closes as `expired/midnight_auto`, `counted=false`; status endpoint reports additive `session_type`, `counted`, `can_extend`, `has_used_extra_today`.
+- Scheduler command `tracking:close-expired` registered every minute in `bootstrap/app.php`; deployment cron note documented.
+- Additive profile endpoints: `PATCH /api/v1/me/profile`, `POST /api/v1/me/photo`, `POST /api/v1/me/password`; `/api/v1/me` includes additive profile/tracking fields.
+- Admin tracker-user detail includes `extra_duty_audit` for forgotten uncounted extra-duty sessions with embedded locations.
+- Docs updated for Phase 3 status, additive APIs, scheduler requirement, Flutter commands/path, and verification limits.
+
+### Verification - 2026-11-24
+- `php artisan test`: **PASS** (68 passed, 329 assertions)
+- `npm --prefix resources/admin-ui run build`: **PASS**
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat analyze` (in `apps/field_tracker_mobile`): **PASS** (No issues found)
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat test` (in `apps/field_tracker_mobile`): **PASS** (22 passed)
+- `C:\Users\Lyns Romero\develop\flutter\bin\flutter.bat build apk --debug` (in `apps/field_tracker_mobile`): **BLOCKED** (missing Android NDK `28.2.13676358` at `C:\Android\Sdk`)
+- Real Android device/emulator FGS smoke: **NOT RUN** (no connected device/emulator)
+
 ### Added - 2026-11-24 (Live Map refinements)
 - Bangladesh-safe factories for latest locations and location logs; local demo test user moved to Dhaka.
 - Collapsible admin sidebar with a header burger toggle and `localStorage` persistence.
@@ -50,5 +69,6 @@
 ### Known issues / blockers
 - Redis not configured locally; required before queue/cache/Reverb phases.
 - Full `laravel/reverb` runtime package/process not installed; channel auth, event payload, and frontend subscription hook are implemented and tested.
-- Flutter/Android toolchain not installed; required before Phase 3-5.
+- Android debug build blocked in this environment: missing NDK `28.2.13676358` at `C:\Android\Sdk`; real Android device/emulator FGS smoke not run (no connected device).
+- Scheduler/cron must run `php artisan schedule:run` every minute for `tracking:close-expired` in deployed environments.
 - Production MySQL vs MariaDB decision to confirm before deployment.
