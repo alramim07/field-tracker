@@ -9,6 +9,7 @@ import '../history/location_history_repository.dart';
 import '../sync/sync_service.dart';
 import 'current_location_provider.dart';
 import 'day_state_store.dart';
+import 'tracking_bridge.dart';
 import 'tracking_status.dart';
 import 'tracking_status_repository.dart';
 
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
     super.key,
     required this.trackingStatusRepository,
     required this.syncService,
+    this.trackingBridge,
     this.dayStateStore,
     this.locationHistoryRepository,
     this.currentLocationProvider,
@@ -28,6 +30,7 @@ class HomeScreen extends StatefulWidget {
 
   final TrackingStatusRepository trackingStatusRepository;
   final SyncService syncService;
+  final TrackingBridge? trackingBridge;
   final DayStateStore? dayStateStore;
   final LocationHistoryRepository? locationHistoryRepository;
   final CurrentLocationProvider? currentLocationProvider;
@@ -182,6 +185,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _runBridgeAction(Future<void> Function(TrackingBridge bridge) action) async {
+    final bridge = widget.trackingBridge;
+    if (bridge == null) return;
+    try {
+      await action(bridge);
+      if (!mounted) return;
+      await _refreshStatus();
+      await _refreshLocationAndHistory();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _syncMessage = 'Action failed';
+      });
+    }
+  }
+
   bool get _isFreshDayReset {
     final status = _status;
     if (status == null) return false;
@@ -191,8 +210,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (session == null) return false;
     final endedAt = session.endedAt;
     if (endedAt == null) return false;
-    final endedDay = DateTime(endedAt.toLocal().year, endedAt.toLocal().month, endedAt.toLocal().day);
-    // Midnight auto-stop or any session that ended before today means fresh day.
+    final endedDay = DateTime(
+      endedAt.toLocal().year,
+      endedAt.toLocal().month,
+      endedAt.toLocal().day,
+    );
+    // Forgotten extra duty auto-stopped at midnight belongs to previous day.
+    if (session.stopReason == 'midnight_auto_stopped' && session.counted == false) {
+      return !endedDay.isAfter(today);
+    }
+    // Any other session that ended before today indicates stale state after date change.
     return endedDay.isBefore(today);
   }
 
@@ -230,6 +257,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final end = session.isActive ? _now().toUtc() : (session.endedAt ?? _now().toUtc());
     final diff = end.difference(start);
     return diff.isNegative ? Duration.zero : diff;
+  }
+
+  bool get _showTravelHistory {
+    if (_segments.isNotEmpty) return true;
+    final status = _status;
+    if (status == null) return false;
+    if (status.activeSession != null) return true;
+    if (status.hasUsedExtraToday) return true;
+    if (status.canExtend) return true;
+    return false;
   }
 
   @override
@@ -299,8 +336,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   _buildMapCard(context),
                   const SizedBox(height: 16),
                   _buildTimerCard(context),
-                  const SizedBox(height: 16),
-                  _buildTimeline(context),
+                  if (_showTravelHistory) ...[
+                    const SizedBox(height: 16),
+                    _buildTimeline(context),
+                  ],
                 ],
               ),
             ),
@@ -411,7 +450,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case _HomeViewState.beforeStart:
         return FilledButton(
           key: const Key('start_duty_tracking'),
-          onPressed: null,
+          onPressed: () => _runBridgeAction((b) => b.startNormalDuty()),
           child: const Text('Start duty tracking'),
         );
       case _HomeViewState.normalTracking:
@@ -426,13 +465,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       case _HomeViewState.dutyEnded:
         return FilledButton(
           key: const Key('extend_duty_tracking'),
-          onPressed: null,
+          onPressed: () => _runBridgeAction((b) => b.startExtraDuty()),
           child: const Text('Extend duty tracking time'),
         );
       case _HomeViewState.extraTracking:
         return FilledButton(
           key: const Key('end_extra_duty'),
-          onPressed: null,
+          onPressed: () => _runBridgeAction((b) => b.stopExtraDuty()),
           child: const Text('End extra duty'),
         );
       case _HomeViewState.extraEnded:

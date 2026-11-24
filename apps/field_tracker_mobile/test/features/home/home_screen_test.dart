@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:field_tracker_mobile/features/home/day_state_store.dart';
 import 'package:field_tracker_mobile/features/home/home_screen.dart';
+import 'package:field_tracker_mobile/features/home/tracking_bridge.dart';
 import 'package:field_tracker_mobile/features/home/tracking_status.dart';
 import 'package:field_tracker_mobile/features/home/tracking_status_repository.dart';
 import 'package:field_tracker_mobile/features/sync/sync_service.dart';
@@ -44,6 +45,39 @@ class FakeDayStateStore implements DayStateStore {
   @override
   Future<void> clear() async {
     lastActiveDay = null;
+  }
+}
+
+class FakeTrackingBridge implements TrackingBridge {
+  int startNormalCalls = 0;
+  int startExtraCalls = 0;
+  int stopExtraCalls = 0;
+
+  @override
+  Stream<Map<String, dynamic>> get events => const Stream.empty();
+
+  @override
+  Future<Map<String, dynamic>?> getCurrentState() async => null;
+
+  @override
+  Future<void> startTracking(Map<String, dynamic> payload) async {}
+
+  @override
+  Future<void> stopTracking() async {}
+
+  @override
+  Future<void> startNormalDuty() async {
+    startNormalCalls++;
+  }
+
+  @override
+  Future<void> startExtraDuty() async {
+    startExtraCalls++;
+  }
+
+  @override
+  Future<void> stopExtraDuty() async {
+    stopExtraCalls++;
   }
 }
 
@@ -144,5 +178,89 @@ void main() {
 
     expect(sync.syncCalls, greaterThanOrEqualTo(1));
     expect(find.text('Start duty tracking'), findsOneWidget);
+  });
+
+  testWidgets('hides travel history before tracking starts', (tester) async {
+    final repo = FakeTrackingStatusRepository(_freshDayStatus(DateTime(2026, 11, 24, 8, 0)));
+    final sync = FakeSyncService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          trackingStatusRepository: repo,
+          syncService: sync,
+          now: () => DateTime(2026, 11, 24, 8, 0),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text("Today's travel history"), findsNothing);
+    expect(find.text('No movement recorded yet'), findsNothing);
+  });
+
+  testWidgets('start duty tracking button calls bridge and refreshes', (tester) async {
+    final now = DateTime(2026, 11, 24, 8, 0);
+    final repo = FakeTrackingStatusRepository(_freshDayStatus(now));
+    final sync = FakeSyncService();
+    final bridge = FakeTrackingBridge();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          trackingStatusRepository: repo,
+          syncService: sync,
+          trackingBridge: bridge,
+          now: () => now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('start_duty_tracking')));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(bridge.startNormalCalls, 1);
+    expect(repo.calls, greaterThanOrEqualTo(2)); // initial + refresh after action
+  });
+
+  testWidgets('does not fresh-reset a normal same-day ended session', (tester) async {
+    final now = DateTime(2026, 11, 24, 18, 0);
+    final start = DateTime.utc(2026, 11, 24, 9, 0);
+    final end = DateTime.utc(2026, 11, 24, 17, 0);
+    final repo = FakeTrackingStatusRepository(TrackingStatus(
+      serverTime: now.toUtc(),
+      canExtend: true,
+      hasUsedExtraToday: false,
+      activeSession: TrackingSessionStatus(
+        sessionUuid: 's-normal',
+        status: 'expired',
+        sessionType: 'normal_duty',
+        counted: true,
+        startedAt: start,
+        expiresAt: end,
+        endedAt: end,
+        stopReason: 'duty_end_expired',
+        canExtend: true,
+        hasUsedExtraToday: false,
+      ),
+    ));
+    final sync = FakeSyncService();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HomeScreen(
+          trackingStatusRepository: repo,
+          syncService: sync,
+          now: () => now,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('DUTY ENDED'), findsOneWidget);
+    expect(find.text('Extend duty tracking time'), findsOneWidget);
+    expect(find.text('NOT STARTED'), findsNothing);
   });
 }
