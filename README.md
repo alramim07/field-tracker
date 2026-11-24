@@ -51,12 +51,14 @@ Enterprise Android live location tracking and management system (backend foundat
 php artisan test
 npm --prefix resources/admin-ui run build
 ```
-Latest verified backend result: **47 passed, 139 assertions**. Admin UI build: **PASS**.
+Latest verified backend result: **50 passed, 230 assertions**. Admin UI build: **PASS**.
 
 ## Phase 6 Admin Dashboard
 - Backend: RBAC permissions (`section.action`), admin SPA auth (`/api/v1/admin/auth/*`), admin/tracker user management APIs, dashboard metrics, live location endpoint, and broadcasting channel auth for `admin.live-locations`.
-- Frontend: React + Tailwind SPA in `resources/admin-ui/`, served at `/admin`, with permission-guarded sidebar, dashboard metrics, tracker/admin management, settings placeholder, and live map.
+- Frontend: React + Tailwind SPA in `resources/admin-ui/`, served at `/admin`, with permission-guarded sidebar (burger-controlled collapse/expand, remembered in `localStorage`), dashboard metrics, tracker/admin management, settings placeholder, and live map.
 - Live Map: uses free OpenStreetMap tiles by default (no API key). The Google Maps implementation is retained and can be enabled later through a Settings-provided API key/provider switch.
+- Live Map details table: shows rounded avatar, user, dynamically reverse-geocoded current place name, previous-ping place name, live-ticking tracker time (`HH:MM:SS`), and offline time during duty. Place names come from OpenStreetMap/Nominatim and are cached for 24 hours; coordinates are used as a fallback.
+- App timezone is `Asia/Dhaka` so duty windows and durations match Bangladesh operations.
 - Dashboard `Currently using app` counts employees with an active tracking session **and** a location ping within the last 5 minutes, so stale test sessions do not appear as active app usage.
 - Realtime: `LatestLocationUpdated` broadcasts on private `admin.live-locations`; frontend subscribes via Laravel Echo/Reverb when configured. Composer install of `laravel/reverb` may be required in environments where it is not yet present.
 
@@ -79,6 +81,8 @@ php artisan serve
 5. Check status/history: `GET /api/v1/tracking/status`, `GET /api/v1/me/location-history`
 6. Login super admin to admin SPA: `POST /api/v1/admin/auth/login`, then open `/admin`.
 7. Verify Dashboard metrics, Tracker Users CRUD with duty time, Admins permission assignment (super admin only), and Live Map initial load.
+8. On `/admin/live-map`, confirm the details table shows a Bangladesh place name, the previous-ping place name, a tracker time that ticks each second while tracking is active, and offline time for location gaps longer than 5 minutes.
+9. Click the header burger button to collapse/expand the sidebar; reload to confirm the choice is remembered.
 
 See `docs/API_DOCUMENTATION.md` for details.
 

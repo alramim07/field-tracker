@@ -1,6 +1,6 @@
 # Testing
 
-## Latest automated run (Phase 6, 2026-11-23)
+## Latest automated run (Phase 6, 2026-11-24)
 
 Commands:
 ```powershell
@@ -9,7 +9,7 @@ npm --prefix resources/admin-ui run build
 ```
 
 Result: **PASS**
-- Backend: **47 passed, 139 assertions**
+- Backend: **50 passed, 230 assertions**
 - Admin UI build: **PASS** (Vite production build)
 
 ## Suites covered
@@ -23,6 +23,7 @@ Result: **PASS**
 - Employee self API: own history/sessions/reports, cannot see other employee data
 - Admin API: admin access OK, employee forbidden
 - Phase 6 admin: duty/profile fields, RBAC schema/gates, SPA auth, tracker/admin management, dashboard metrics, broadcast channel auth, live locations endpoint/payload, admin shell route
+- Live Map data: Bangladesh factory coordinates, dynamic place-name resolution, previous-ping place name, tracker/offline durations, active-tracking flag, broadcast payload parity
 
 ## Manual smoke test checklist
 1. `php artisan serve`
@@ -36,6 +37,9 @@ Result: **PASS**
 9. Login admin (`superadmin@fieldtracker.local` / `password`) -> `/api/v1/admin/live-locations` returns data
 10. Open `/admin/live-map` -> OpenStreetMap tiles load without any API key; marker/accuracy/halo render from latest locations
 11. Open `/admin` -> `Currently using app` is 0 for stale active sessions without a recent location ping
+12. Open `/admin/live-map` -> previous-ping place name appears under `Last location`, not raw coordinates
+13. Tracker time displays `HH:MM:SS` and increments every second while `is_tracking` is true
+14. Click the header burger button -> sidebar collapses/expands and the choice persists after reload
 
 ## Not yet tested
 - Real Android device/FGS behavior

@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\LatestLocation;
+use App\Services\LiveMap\LiveUserDataService;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
@@ -27,8 +28,9 @@ class LatestLocationUpdated implements ShouldBroadcastNow
     /** @return array<string, mixed> */
     public function broadcastWith(): array
     {
-        $location = $this->latestLocation->loadMissing('employee.user:id,name', 'employee:id,user_id,designation,employee_code');
+        $location = $this->latestLocation->loadMissing('employee.user:id,name', 'employee:id,user_id,designation,employee_code,duty_start_time,duty_end_time');
         $employee = $location->employee;
+        $details = app(LiveUserDataService::class)->detailsFor($location);
 
         return [
             'employee_id' => $employee?->id,
@@ -40,6 +42,7 @@ class LatestLocationUpdated implements ShouldBroadcastNow
             'accuracy' => $location->accuracy !== null ? (float) $location->accuracy : null,
             'recorded_at' => optional($location->recorded_at)->toISOString(),
             'status' => 'active',
+            ...$details,
         ];
     }
 }

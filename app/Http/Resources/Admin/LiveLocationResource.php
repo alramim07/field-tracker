@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Admin;
 
+use App\Models\LatestLocation;
+use App\Services\LiveMap\LiveUserDataService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\LatestLocation */
+/** @mixin LatestLocation */
 class LiveLocationResource extends JsonResource
 {
     /** @return array<string, mixed> */
@@ -13,6 +15,7 @@ class LiveLocationResource extends JsonResource
     {
         $employee = $this->employee;
         $user = $employee?->user;
+        $details = app(LiveUserDataService::class)->detailsFor($this->resource);
 
         return [
             'employee_id' => $employee?->id,
@@ -24,6 +27,7 @@ class LiveLocationResource extends JsonResource
             'accuracy' => $this->accuracy !== null ? (float) $this->accuracy : null,
             'recorded_at' => optional($this->recorded_at)->toISOString(),
             'status' => 'active',
+            ...$details,
         ];
     }
 }

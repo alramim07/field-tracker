@@ -23,8 +23,10 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Local planning (do not commit)
+# Local planning and harness artifacts (do not commit)
 plan/
+.superpowers/
+.playwright-mcp/
 
 /public/build-admin
 /resources/admin-ui/node_modules

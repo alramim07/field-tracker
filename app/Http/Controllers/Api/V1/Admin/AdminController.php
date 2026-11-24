@@ -44,7 +44,7 @@ class AdminController extends Controller
 
     public function liveLocations(Request $request): JsonResponse
     {
-        $query = LatestLocation::query()->with(['employee.user:id,name,avatar_path', 'employee:id,user_id,designation,employee_code']);
+        $query = LatestLocation::query()->with(['employee.user:id,name,avatar_path', 'employee:id,user_id,designation,employee_code,duty_start_time,duty_end_time']);
         $locations = $query->latest('recorded_at')->paginate(min((int) $request->integer('per_page', 50), 200));
 
         return LiveLocationResource::collection($locations)->response();
