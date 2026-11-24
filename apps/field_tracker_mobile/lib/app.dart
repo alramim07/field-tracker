@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
+import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/storage/token_storage.dart';
 import 'features/auth/api_auth_repository.dart';
@@ -14,6 +15,8 @@ import 'features/home/day_state_store.dart';
 import 'features/home/geolocator_current_location_provider.dart';
 import 'features/home/home_screen.dart';
 import 'features/sync/app_sync_service.dart';
+import 'features/tracking/api_tracking_session_api.dart';
+import 'features/tracking/tracker_bridge.dart';
 
 class FieldTrackerApp extends StatefulWidget {
   const FieldTrackerApp({super.key});
@@ -27,25 +30,28 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
   late final ApiClient _apiClient;
   late final ApiAuthRepository _authRepository;
   late final DeviceRegistrationService _deviceRegistrationService;
+  late final SecureDeviceIdentityStorage _deviceIdentityStorage;
   late final AuthController _authController;
   late final ApiTrackingStatusRepository _trackingStatusRepository;
   late final ApiLocationHistoryRepository _locationHistoryRepository;
   late final GeolocatorCurrentLocationProvider _locationProvider;
   late final DayStateStore _dayStateStore;
   late final AppSyncService _syncService;
+  late final TrackingBridge _trackingBridge;
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     _tokenStorage = TokenStorage();
+    _deviceIdentityStorage = SecureDeviceIdentityStorage();
     _apiClient = ApiClient(tokenStorage: _tokenStorage);
     _authRepository = ApiAuthRepository(
       apiClient: _apiClient,
       tokenStorage: _tokenStorage,
     );
     _deviceRegistrationService = DeviceRegistrationService(
-      storage: SecureDeviceIdentityStorage(),
+      storage: _deviceIdentityStorage,
       api: ApiDeviceRegistrationApi(apiClient: _apiClient),
     );
     _trackingStatusRepository = ApiTrackingStatusRepository(apiClient: _apiClient);
@@ -63,9 +69,21 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
         await _locationHistoryRepository.fetchCurrentDay();
       },
     ]);
+    _trackingBridge = MethodChannelTrackingBridge(
+      sessionApi: ApiTrackingSessionApi(
+        apiClient: _apiClient,
+        deviceIdentityStorage: _deviceIdentityStorage,
+        tokenStorage: _tokenStorage,
+        baseUrl: AppConfig.apiBaseUrl,
+      ),
+      tokenProvider: _tokenStorage.readToken,
+      deviceUuidProvider: _deviceIdentityStorage.readDeviceUuid,
+      baseUrl: AppConfig.apiBaseUrl,
+    );
     _authController = AuthController(
       authRepository: _authRepository,
       deviceRegistrationService: _deviceRegistrationService,
+      trackingBridge: _trackingBridge,
     );
     _router = GoRouter(
       initialLocation: '/login',
@@ -91,6 +109,7 @@ class _FieldTrackerAppState extends State<FieldTrackerApp> {
           builder: (context, state) => HomeScreen(
             trackingStatusRepository: _trackingStatusRepository,
             syncService: _syncService,
+            trackingBridge: _trackingBridge,
             dayStateStore: _dayStateStore,
             locationHistoryRepository: _locationHistoryRepository,
             currentLocationProvider: _locationProvider,

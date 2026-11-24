@@ -60,6 +60,15 @@ class FakeTrackingBridge implements TrackingBridge {
   Future<Map<String, dynamic>?> getCurrentState() async => null;
 
   @override
+  Future<Map<String, dynamic>?> getState() async => null;
+
+  @override
+  Future<bool> isRunning() async => false;
+
+  @override
+  Future<void> syncState() async {}
+
+  @override
   Future<void> startTracking(Map<String, dynamic> payload) async {}
 
   @override
