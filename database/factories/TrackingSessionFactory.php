@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\TrackingSessionStatus;
+use App\Enums\TrackingSessionType;
 use App\Models\Device;
 use App\Models\Employee;
 use App\Models\TrackingPolicy;
@@ -34,6 +35,8 @@ class TrackingSessionFactory extends Factory
             'ended_at' => null,
             'status' => TrackingSessionStatus::ACTIVE,
             'stop_reason' => null,
+            'session_type' => TrackingSessionType::NORMAL_DUTY,
+            'counted' => true,
         ];
     }
 }

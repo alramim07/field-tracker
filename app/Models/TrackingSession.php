@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\StopReason;
 use App\Enums\TrackingSessionStatus;
+use App\Enums\TrackingSessionType;
 use Database\Factories\TrackingSessionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,8 @@ class TrackingSession extends Model
         'ended_at',
         'status',
         'stop_reason',
+        'session_type',
+        'counted',
     ];
 
     /** @return array<string, string> */
@@ -40,6 +43,8 @@ class TrackingSession extends Model
             'ended_at' => 'datetime',
             'status' => TrackingSessionStatus::class,
             'stop_reason' => StopReason::class,
+            'session_type' => TrackingSessionType::class,
+            'counted' => 'boolean',
         ];
     }
 
