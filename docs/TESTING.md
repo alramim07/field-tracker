@@ -44,6 +44,6 @@ Result: **PASS**
 ## Not yet tested
 - Real Android device/FGS behavior
 - End-to-end Reverb runtime with `laravel/reverb` package installed and running (channel auth/payload covered by tests; package install timed out in this environment)
-- Admin UI browser E2E against live backend/Reverb
+- Automated admin UI browser E2E suite (manual browser verification against the live backend is already done)
 - Load test (400 devices / 80 events/sec)
 - Production MySQL/Redis deployment behavior

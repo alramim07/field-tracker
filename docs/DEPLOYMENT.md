@@ -1,7 +1,9 @@
 # Deployment
 
 ## Status
-Not deployed. Phase 9.
+Not deployed. Phase 9 remains pending. Phases 1, 2, and 6 are implemented and verified locally, including the admin SPA at `/admin`.
+
+Before deployment: install/configure Redis and the full `laravel/reverb` runtime, choose MySQL vs MariaDB, build `public/build-admin`, and run the production smoke checklist.
 
 ## Target
 Ubuntu 24.04 LTS, Nginx, PHP 8.3+, MySQL, Redis, Supervisor, Laravel Reverb, HTTPS, backups, monitoring.

@@ -76,7 +76,7 @@ Request:
   }]
 }
 ```
-Rules: device/session ownership verified; expired/inactive session rejected; duplicate `event_uuid` deduped; `recorded_at` preserved; `received_at` set server-side; `latest_locations` updated only when incoming `recorded_at` is newer; `LatestLocationUpdated` event dispatched (Reverb wiring Phase 6).
+Rules: device/session ownership verified; expired/inactive session rejected; duplicate `event_uuid` deduped; `recorded_at` preserved; `received_at` set server-side; `latest_locations` updated only when incoming `recorded_at` is newer; `LatestLocationUpdated` event dispatched with private `admin.live-locations` channel auth and payload tests. Full Reverb runtime install remains an environment/deployment task.
 Response `200`:
 ```json
 { "data": { "accepted": 1, "duplicates": 0, "rejected": 0, "errors": [] } }

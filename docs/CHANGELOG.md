@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added - 2026-11-24 (Live Map refinements)
+- Bangladesh-safe factories for latest locations and location logs; local demo test user moved to Dhaka.
+- Collapsible admin sidebar with a header burger toggle and `localStorage` persistence.
+- Live Map details table with rounded avatar, current place name, previous-ping place name, live-ticking tracker time (`HH:MM:SS`), and offline time during duty.
+- Dynamic reverse geocoding via OpenStreetMap/Nominatim with 24-hour cache and coordinate fallback.
+- Backend `is_tracking` flag so tracker time only ticks while a session is active.
+- App timezone configurable via `APP_TIMEZONE`, defaulted to `Asia/Dhaka` in `.env.example`.
+- Updated project status docs and test documentation.
+
 ### Added - 2026-11-23 (Phase 6 admin dashboard)
 - RBAC schema/models: admin roles, permissions, pivots, permission seeder, PermissionService/Gate.
 - Admin SPA auth endpoints (session/cookie) under `/api/v1/admin/auth/*`; mobile token auth preserved.
@@ -17,7 +26,7 @@
 - Device registration/revocation APIs with ownership checks, admin revoke, audit logging.
 - Tracking session APIs: start/stop/status with server-authoritative fixed expiry, policy snapshot, duplicate active session prevention.
 - Location batch ingestion API: validation, ownership checks, expired/inactive session rejection, event_uuid dedupe, recorded_at preserved, server received_at, latest_locations updated only for newer recorded_at.
-- `LatestLocationUpdated` event dispatch hook (Reverb wiring pending Phase 6).
+- `LatestLocationUpdated` event dispatch hook (private channel auth/payload wired in Phase 6; full Reverb runtime install remains pending).
 - Employee self endpoints: location-history, sessions, reports.
 - Admin skeleton endpoints: employees, devices, tracking-policies, audit-logs, live-locations with admin middleware.
 - Feature tests for auth, device, tracking, location batch, employee self, admin access.
@@ -40,5 +49,6 @@
 
 ### Known issues / blockers
 - Redis not configured locally; required before queue/cache/Reverb phases.
+- Full `laravel/reverb` runtime package/process not installed; channel auth, event payload, and frontend subscription hook are implemented and tested.
 - Flutter/Android toolchain not installed; required before Phase 3-5.
 - Production MySQL vs MariaDB decision to confirm before deployment.
