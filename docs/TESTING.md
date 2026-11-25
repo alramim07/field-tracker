@@ -8,13 +8,14 @@ php artisan test
 ```
 
 Result: **PASS**
-- Backend: **70 passed, 339 assertions**
+- Backend: **71 passed, 342 assertions**
 
 Previous Phase 3 verification (2026-11-24, worktree) also recorded: admin UI build PASS, Flutter analyze PASS, Flutter test 22 passed, Android debug APK build BLOCKED (missing NDK `28.2.13676358`), real Android FGS smoke NOT RUN.
 
 ## Suites covered
 
 ### Backend (Laravel/PHPUnit)
+- Admin shell: route returns OK and loads built `/build-admin/assets` (no blank-page dev-server fallback)
 - Unit example
 - Feature example
 - Phase 1 foundation: model relationships, unique constraints, enum casts, audit log service
